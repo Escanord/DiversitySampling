@@ -1,20 +1,23 @@
 #pragma once
 
-#include <iostream>
 #include <iomanip>
 #include <cstdint>
 #include <queue>
-
-using namespace std;
+#include <iostream>
+#include <tgmath.h> 
+#include <string>
+#include <cstring>
+#include <iostream>
+#include <fstream>
 
 struct Node {
     public:
-        Node(void * p, double w) {
-            ptr = p;
+        Node(std::string s, double w) {
+            str = s;
             weight = w;
         }
 
-        void * ptr;
+        std::string str;
         double weight;
 };
 
@@ -30,13 +33,12 @@ public:
     Reservoir(size_t desired_sample_size); 
     ~Reservoir(); 
 
-    void process(void * element, double weight); 
-    void reset(); 
+    void put(std::string element, double weight); 
 
-    void pprint(std::ostream& out, int width = 3, bool format = true); 
+    void drain(std::ofstream& out); 
     
     private:
-    	priority_queue< struct Node, vector<struct Node>, Comp> _pq;
+    	std::priority_queue<struct Node, std::vector<struct Node>, Comp> _pq;
         size_t _sample_size;
 };
 

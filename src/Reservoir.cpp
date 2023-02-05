@@ -1,6 +1,4 @@
-
 #include "Reservoir.h"
-#include <tgmath.h> 
 
 /*
 Copyright 2023, Adam Zawierucha, All rights reserved. 
@@ -15,10 +13,10 @@ Reservoir::Reservoir(size_t desired_sample_size){
 }
 
 Reservoir::~Reservoir(){
-	delete &_pq;
+	// delete &_pq;
 }
 
-void Reservoir::process(void *element, double weight){
+void Reservoir::put(std::string element, double weight){
 	
 	double r = (double) rand() / RAND_MAX;
 	double score = pow(r, 1/weight);
@@ -26,6 +24,14 @@ void Reservoir::process(void *element, double weight){
 	_pq.emplace(element, score);
 
 	if (_pq.size() > _sample_size) {
+		_pq.pop();
+	}
+}
+
+void Reservoir::drain(std::ofstream& out){
+
+	while(!_pq.empty()) {
+		out << _pq.top().str;
 		_pq.pop();
 	}
 }

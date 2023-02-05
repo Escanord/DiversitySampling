@@ -4,7 +4,7 @@
 CXX = g++
 CFLAGS = -O3 -std=c++11 #-fopenmp
 
-SRCS = SequenceMinHash.cpp io.cpp MurmurHash.cpp util.cpp RACE.cpp 
+SRCS = SequenceMinHash.cpp io.cpp MurmurHash.cpp util.cpp RACE.cpp Reservoir.cpp
 SRCS_DIR = src/
 
 BUILD_DIR = build/

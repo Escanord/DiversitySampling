@@ -2,6 +2,7 @@
 #include "SequenceMinHash.h"
 #include "RACE.h"
 #include "util.h"
+#include "Reservoir.h"
 
 #include <chrono>
 #include <string>
@@ -36,10 +37,10 @@ int main(int argc, char **argv){
 
     if (argc < 4){
         std::clog<<"Usage: "<<std::endl; 
-        std::clog<<"samplerace <tau> <format> <input> <output>"; 
+        std::clog<<"samplerace <sample_size> <format> <input> <output>"; 
         std::clog<<" [--range race_range] [--reps race_reps] [--hashes n_minhashes] [-k kmer_size]"<<std::endl; 
         std::clog<<"Positional arguments: "<<std::endl; 
-        std::clog<<"tau: floating point RACE sampling threshold. Roughly determines how many samples you will store. You may specify this in scientific notation (i.e. 10e-6)"<<std::endl; 
+        std::clog<<"sample_size: integer representing how many elements to sample"<<std::endl; 
         std::clog<<"format: Either PE, SE, or I for paired-end, single-end, and interleaved paired reads"<<std::endl; 
         std::clog<<"input: path to input data file (.fastq or .fasta extension). For PE format, specify two files."<<std::endl; 
         std::clog<<"output: path to output sample file (same extension as input). For PE format, specify two files."<<std::endl; 
@@ -51,15 +52,15 @@ int main(int argc, char **argv){
         std::clog<<"[--k kmer_size]: (Optional, default 16) Size of each MinHash k-mer (k)"<<std::endl;
 
         std::clog<<std::endl<<"Example usage:"<<std::endl; 
-        std::clog<<"samplerace 15.0 PE data/input-1.fastq data/input-2.fastq data/output-1.fastq data/output-2.fastq --range 100 --reps 50 --hashes 3 --k 5"<<std::endl; 
-        std::clog<<"samplerace 10e-6 SE data/input.fastq data/output.fastq --range 100 --reps 5 --hashes 1 --k 33"<<std::endl; 
-        std::clog<<"samplerace 0.1 SE data/input.fasta data/output.fasta --range 100000 --k 20"<<std::endl; 
+        std::clog<<"samplerace 100 PE data/input-1.fastq data/input-2.fastq data/output-1.fastq data/output-2.fastq --range 100 --reps 50 --hashes 3 --k 5"<<std::endl; 
+        std::clog<<"samplerace 100 SE data/input.fastq data/output.fastq --range 100 --reps 5 --hashes 1 --k 33"<<std::endl; 
+        std::clog<<"samplerace 100 SE data/input.fasta data/output.fasta --range 100000 --k 20"<<std::endl; 
         return -1; 
     }
 
 
     // POSITIONAL ARGUMENTS
-    double tau = std::stod(argv[1]);
+    double sample_size = std::stoi(argv[1]);
     int format; // ENUM: 1 = unpaired, 2 = interleaved, 3 = paired
     if (std::strcmp("SE",argv[2]) == 0){
         format = 1;
@@ -80,17 +81,22 @@ int main(int argc, char **argv){
     // open the correct file streams given the format
     std::ifstream datastream1;
     std::ofstream samplestream1;
+    Reservoir reservoir1 = NULL;
     std::ifstream datastream2;
     std::ofstream samplestream2;
+    Reservoir reservoir2 = NULL;
 
     if (format != 3){
         datastream1.open(argv[3]);
         samplestream1.open(argv[4]);
+        reservoir1 = Reservoir(sample_size);
     } else {
         datastream1.open(argv[3]);
         datastream2.open(argv[4]);
         samplestream1.open(argv[5]);
         samplestream2.open(argv[6]);
+        reservoir1 = Reservoir(sample_size);
+        reservoir2 = Reservoir(sample_size);
     }
 
     // determine file extension
@@ -154,7 +160,7 @@ int main(int argc, char **argv){
     }
 
     // Check if arguments are valid
-    if (tau <= 0){ std::cerr<<"Invalid value for parameter <tau>"<<std::endl; return -1; }
+    if (sample_size <= 0){ std::cerr<<"Invalid value for parameter <sample_size>"<<std::endl; return -1; }
     if (race_range <= 0){ std::cerr<<"Invalid value for optional parameter --range"<<std::endl; return -1; }
     if (race_repetitions <= 0){ std::cerr<<"Invalid value for optional parameter --reps"<<std::endl; return -1; }
     if (hash_power <= 0){ std::cerr<<"Invalid value for optional parameter --hashes"<<std::endl; return -1; }
@@ -173,6 +179,7 @@ int main(int argc, char **argv){
     int* rehashes = new int[race_repetitions];
 
     RACE sketch = RACE(race_repetitions,race_range); 
+
 
     do{
         bool success = false; 
@@ -204,22 +211,31 @@ int main(int argc, char **argv){
         // then simultaneously query and add 
         double KDE = sketch.query_and_add(rehashes); 
         // note: KDE is on a scale from [0,N] not the normalized interval [0,1]
-        if (KDE < tau){
-            // then keep this sample
-            
-            switch(format){
-                case 1: // 1 = unpaired
-                samplestream1 << chunk1; 
-                break; 
-                case 2: // 2 = interleaved
-                samplestream1 << chunk1; 
-                break; 
-                case 3: // 3 = paired
-                samplestream1 << chunk1; 
-                samplestream2 << chunk2; 
-                break; 
-            }
+
+        double weight = 1/KDE; //TODO: Make this strategy variable
+  
+        switch(format){
+            case 1: // 1 = unpaired
+            case 2: // 2 = interleaved
+            reservoir1.put(chunk1, weight);
+            break; 
+            case 3: // 3 = paired
+            reservoir1.put(chunk1, weight);
+            reservoir2.put(chunk2, weight);
+            break; 
         }
+        
     }
     while(datastream1);
+
+    switch(format){
+        case 1: // 1 = unpaired
+        case 2: // 2 = interleaved
+        reservoir1.drain(samplestream1);
+        break; 
+        case 3: // 3 = paired
+        reservoir1.drain(samplestream1);
+        reservoir2.drain(samplestream2);
+        break; 
+    }
 }
