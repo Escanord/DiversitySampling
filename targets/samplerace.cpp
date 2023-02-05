@@ -181,6 +181,8 @@ int main(int argc, char **argv){
     RACE sketch = RACE(race_repetitions,race_range); 
 
 
+    int t = 0;
+
     do{
         bool success = false; 
         int c = datastream1.peek(); 
@@ -212,7 +214,7 @@ int main(int argc, char **argv){
         double KDE = sketch.query_and_add(rehashes); 
         // note: KDE is on a scale from [0,N] not the normalized interval [0,1]
 
-        double weight = 1/KDE; //TODO: Make this strategy variable
+        double weight = (++t)/KDE; //TODO: Make this strategy variable
   
         switch(format){
             case 1: // 1 = unpaired
