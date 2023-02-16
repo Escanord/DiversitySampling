@@ -28,10 +28,12 @@ void Reservoir::put(std::string element, double weight){
 	}
 }
 
-void Reservoir::drain(std::ofstream& out){
+void Reservoir::drain(std::ofstream& sample_stream, std::ofstream& weight_stream){
 
 	while(!_pq.empty()) {
-		out << _pq.top().str;
+		const Node node = _pq.top();
+		sample_stream << node.str;
+		weight_stream << std::to_string(node.weight) << '\n';
 		_pq.pop();
 	}
 }

@@ -35,7 +35,7 @@ public:
 
     void put(std::string element, double weight); 
 
-    void drain(std::ofstream& out); 
+    void drain(std::ofstream& sample_stream, std::ofstream& weight_stream); 
     
     private:
     	std::priority_queue<struct Node, std::vector<struct Node>, Comp> _pq;

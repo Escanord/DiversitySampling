@@ -81,20 +81,25 @@ int main(int argc, char **argv){
     // open the correct file streams given the format
     std::ifstream datastream1;
     std::ofstream samplestream1;
+    std::ofstream weightstream1;
     Reservoir reservoir1 = NULL;
     std::ifstream datastream2;
     std::ofstream samplestream2;
+    std::ofstream weightstream2;
     Reservoir reservoir2 = NULL;
 
     if (format != 3){
         datastream1.open(argv[3]);
         samplestream1.open(argv[4]);
+        weightstream1.open(strcat(argv[4], ".weights"));
         reservoir1 = Reservoir(sample_size);
     } else {
         datastream1.open(argv[3]);
         datastream2.open(argv[4]);
         samplestream1.open(argv[5]);
         samplestream2.open(argv[6]);
+        weightstream1.open(strcat(argv[5], ".weights"));
+        weightstream2.open(strcat(argv[6], ".weights"));
         reservoir1 = Reservoir(sample_size);
         reservoir2 = Reservoir(sample_size);
     }
@@ -233,11 +238,11 @@ int main(int argc, char **argv){
     switch(format){
         case 1: // 1 = unpaired
         case 2: // 2 = interleaved
-        reservoir1.drain(samplestream1);
+        reservoir1.drain(samplestream1, weightstream1);
         break; 
         case 3: // 3 = paired
-        reservoir1.drain(samplestream1);
-        reservoir2.drain(samplestream2);
+        reservoir1.drain(samplestream1, weightstream1);
+        reservoir2.drain(samplestream2, weightstream2);
         break; 
     }
 }
