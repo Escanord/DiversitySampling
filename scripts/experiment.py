@@ -108,12 +108,12 @@ with open(kraken_path) as infile:
             species = int(chunks[2])
         else:
             species = UNCLASSIFIED_SPECIES
-        if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
-            continue
         # Map id to species
         if (id in ids_set):
             idToSpecies[id] = species
         # Increment species count
+        if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
+            continue
         if (not species in speciesToProportion.keys()):
             speciesToProportion[species] = 0
         speciesToProportion[species] += 1
