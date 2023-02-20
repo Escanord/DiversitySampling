@@ -77,6 +77,7 @@ with open(sample_path) as infile:
     for line in infile:
         if line.startswith('@'):
             ids_list.append(line.split(' ', 1)[0][1:])
+vprint(ids_list)
 
 # Extract weights
 total_weight = 0
