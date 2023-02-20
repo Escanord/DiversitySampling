@@ -3,7 +3,7 @@ import subprocess
 import argparse
 from Bio import SeqIO
 
-UNKNOWN_SPECIES = -1
+UNCLASSIFIED_SPECIES = -1
 
 def run_kraken(fastq_file):
     pass
@@ -80,12 +80,10 @@ with open(sample_path) as handle:
         ids_set.add(record.id)
 
 # Extract weights
-total_weight = 0
 weights_list = list() 
 with open(weights_path) as infile:
     for line in infile:
         weight = float(line)
-        total_weight += weight
         weights_list.append(weight)
 
 print("Number of weights:", len(weights_list))
@@ -109,7 +107,9 @@ with open(kraken_path) as infile:
         if classified and chunks[2] != None:
             species = int(chunks[2])
         else:
-            species = UNKNOWN_SPECIES
+            species = UNCLASSIFIED_SPECIES
+        if (species == UNCLASSIFIED_SPECIES) #Skips unclassified species
+            continue
         # Map id to species
         if (id in ids_set):
             idToSpecies[id] = species
@@ -122,10 +122,14 @@ for species in speciesToProportion.keys():
 
 # Extract estimated species estimate
 speciesToEstimate = dict()
+total_weight = 0
 for (id, weight) in zip(ids_list, weights_list):
     species = idToSpecies[id]
+    if (species == UNCLASSIFIED_SPECIES) #Skips unclassified species
+        continue
     if (not species in speciesToEstimate.keys()):
         speciesToEstimate[species] = 0
+    total_weight += weight
     speciesToEstimate[species] += weight
 for species in speciesToEstimate.keys():
     speciesToEstimate[species] /= total_weight
