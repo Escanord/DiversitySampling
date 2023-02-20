@@ -12,18 +12,20 @@
 
 struct Node {
     public:
-        Node(std::string s, double w) {
-            str = s;
-            weight = w;
+        Node(std::string str, double score, double weight) {
+            str = str;
+            score = score;
+            weight = weight;
         }
 
         std::string str;
+        double score;
         double weight;
 };
 
 struct Comp{
     bool operator()(const struct Node a, const struct Node b){
-        return a.weight < b.weight;
+        return a.score < b.score;
     }
 };
 

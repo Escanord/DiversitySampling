@@ -21,7 +21,7 @@ void Reservoir::put(std::string element, double weight){
 	double r = (double) rand() / RAND_MAX;
 	double score = pow(r, 1/weight);
 
-	_pq.emplace(element, score);
+	_pq.emplace(element, score, weight);
 
 	if (_pq.size() > _sample_size) {
 		_pq.pop();
