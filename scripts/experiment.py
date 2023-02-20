@@ -118,7 +118,7 @@ with open(kraken_path) as infile:
             speciesToProportion[species] += 1
         else: 
             if (id in ids_set):
-            idToSpecies[id] = UNKNOWN_SPECIES
+                idToSpecies[id] = UNKNOWN_SPECIES
         # Increment species count
 for species in speciesToProportion.keys():
     speciesToProportion[species] /= numSequencesInKraken
