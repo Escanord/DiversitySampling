@@ -147,4 +147,4 @@ rows.sort(key=lambda row: row[1], reverse=True)
 
 print("Species\tProportion\tEstimate")
 for row in rows:
-    print("{: >20} {: >20} {: >20}".format(*row))
+    print("{: >10} {: >25} {: >25}".format(*row))
