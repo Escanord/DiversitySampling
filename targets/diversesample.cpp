@@ -39,7 +39,7 @@ int main(int argc, char **argv){
 
     if (argc < 4){
         std::clog<<"Usage: "<<std::endl; 
-        std::clog<<"diversitysample <sample_size> <format> <input> <output>"; 
+        std::clog<<"diversesample <sample_size> <format> <input> <output>"; 
         std::clog<<" [--range race_range] [--reps race_reps] [--hashes n_minhashes] [-k kmer_size] [--seed random_seed]"<<std::endl; 
         std::clog<<"Positional arguments: "<<std::endl; 
         std::clog<<"sample_size: integer representing how many elements to sample"<<std::endl; 
@@ -55,8 +55,8 @@ int main(int argc, char **argv){
         std::clog<<"[--seed random_seed]: (Optional, default 0) The random seed to configure hash functions with"<<std::endl;
 
         std::clog<<std::endl<<"Example usage:"<<std::endl; 
-        std::clog<<"diversitysample 100 PE data/input-1.fastq data/input-2.fastq data/output-1.fastq data/output-2.fastq --range 100 --reps 50 --hashes 3 --k 5"<<std::endl; 
-        std::clog<<"diversitysample 200 SE data/input.fastq data/output.fastq --range 100 --reps 5 --hashes 1 --k 33"<<std::endl; 
+        std::clog<<"diversesample 100 PE data/input-1.fastq data/input-2.fastq data/output-1.fastq data/output-2.fastq --range 100 --reps 50 --hashes 3 --k 5"<<std::endl; 
+        std::clog<<"diversesample 200 SE data/input.fastq data/output.fastq --range 100 --reps 5 --hashes 1 --k 33"<<std::endl; 
         std::clog<<"diversitysample 300 SE data/input.fasta data/output.fasta --range 100000 --k 20"<<std::endl; 
         return -1; 
     }

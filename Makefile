@@ -12,7 +12,7 @@ BIN_DIR = bin/
 INC := -I include
 
 # List of target executables
-TARGETS = diversitysample.cpp uniformsample.cpp
+TARGETS = diversesample.cpp uniformsample.cpp
 TARGETS_DIR = targets/
 
 # Everything beyond this point is determined from previous declarations, don't modify
