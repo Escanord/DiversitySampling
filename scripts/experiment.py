@@ -78,10 +78,12 @@ with open(sample_path) as infile:
             ids_list.append(line.split(' ', 1)[0][1:])
 
 # Extract weights
+total_weight = 0
 weights_list = list() 
 with open(weights_path) as infile:
     for line in infile:
         weight = float(line)
+        total_weight += weight
         weights_list.append(weight)
 
 assert(len(weights_list) == len(ids_list))
@@ -89,20 +91,44 @@ assert(len(weights_list) == len(ids_list))
 # Identify each speceis form each sequence using kraken
 ids_set = set(ids_list)
 idToSpecies = dict()
-speciesToCount = dict()
+speciesToProportion = dict()
 numSequencesInKraken = 0
+
+# Extract species "true" proportion
 with open(kraken_path) as infile:
     for line in infile:
+        numSequencesInKraken += 1
         # Extract information from kraken line
         chunks = line.split('\t')
-        classified = (chunks[0] == 'C')
+        classified = (chunks[0] == 'C')  
         id = chunks[1]
-        species = int(chunks[2])
-        # Map id to species
-        idToSpecies[id] = species
+        if (classified):
+            species = int(chunks[2])
+            # Map id to species
+            if (id in ids_set):
+                idToSpecies[id] = species
+            # Increment species count
+            if (not species in speciesToProportion.keys()):
+                speciesToProportion[species] = 0
+            speciesToProportion[species] += 1
         # Increment species count
-        numSequencesInKraken += 1
-        if (not species in speciesToCount.keys()):
-            speciesToCount[species] = 0
-        speciesToCount[species] += 1
+for species in speciesToProportion.keys():
+    speciesToProportion[species] /= numSequencesInKraken
 
+# Extract estimated species estimate
+speciesToEstimate = dict()
+for (id, weight) in zip(ids_list, weights_list):
+    species = idToSpecies[id]
+    if (not species in speciesToEstimate.keys()):
+        speciesToEstimate[species] == 0
+    speciesToEstimate += weight
+for species in speciesToEstimate.keys():
+    speciesToEstimate[species] /= total_weight
+
+print("Species\tProportion\tEstimate")
+for species in speciesToEstimate.keys():
+    print(species, '\t', speciesToProportion[species], '\t', speciesToEstimate[species])
+for species in speciesToProportion.keys():
+    if species in speciesToEstimate.keys():
+        continue
+    print(species, '\t', speciesToProportion[species], '\t',  0)
