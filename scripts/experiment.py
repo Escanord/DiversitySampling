@@ -145,6 +145,5 @@ for species in speciesToProportion.keys():
 
 rows.sort(key=lambda row: row[1], reverse=True)
 
-print("Species\tProportion\tEstimate")
-for row in rows:
+for row in [("Species", "Proportion", "Estimate")] + rows:
     print("{: >10} {: >25} {: >25}".format(*row))
