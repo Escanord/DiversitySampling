@@ -134,10 +134,17 @@ for (id, weight) in zip(ids_list, weights_list):
 for species in speciesToEstimate.keys():
     speciesToEstimate[species] /= total_weight
 
-print("Species\tProportion\tEstimate")
+
+rows = []
 for species in speciesToEstimate.keys():
-    print(species, '\t', speciesToProportion[species], '\t', speciesToEstimate[species])
+    rows.append((species, speciesToProportion[species], speciesToEstimate[species]))
 for species in speciesToProportion.keys():
     if species in speciesToEstimate.keys():
         continue
-    print(species, '\t', speciesToProportion[species], '\t',  0)
+    rows.append((species, speciesToProportion[species], 0))
+
+rows.sort(key=lambda row: row[1], reverse=True)
+
+print("Species\tProportion\tEstimate")
+for row in rows:
+    print("{: >20} {: >20} {: >20}".format(*row))
