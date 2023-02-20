@@ -107,19 +107,14 @@ with open(kraken_path) as infile:
         chunks = line.split('\t')
         classified = (chunks[0] == 'C')  
         id = chunks[1]
-        if (classified):
-            species = int(chunks[2])
-            # Map id to species
-            if (id in ids_set):
-                idToSpecies[id] = species
-            # Increment species count
-            if (not species in speciesToProportion.keys()):
-                speciesToProportion[species] = 0
-            speciesToProportion[species] += 1
-        else: 
-            if (id in ids_set):
-                idToSpecies[id] = UNKNOWN_SPECIES
+        species = (classified and int(chunks[2])) or UNKNOWN_SPECIES
+        # Map id to species
+        if (id in ids_set):
+            idToSpecies[id] = species
         # Increment species count
+        if (not species in speciesToProportion.keys()):
+            speciesToProportion[species] = 0
+        speciesToProportion[species] += 1
 for species in speciesToProportion.keys():
     speciesToProportion[species] /= numSequencesInKraken
 
