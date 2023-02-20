@@ -3,8 +3,7 @@ import subprocess
 import argparse
 from Bio import SeqIO
 
-repeat = 10
-
+UNKNOWN_SPECIES = -1
 
 def run_kraken(fastq_file):
     pass
@@ -74,9 +73,11 @@ vprint("Kraken file can be located at " + kraken_path)
 
 # Extract ids from samples 
 ids_list = list()
+ids_set = set()
 with open(sample_path) as handle:
     for record in SeqIO.parse(handle, "fastq"):
         ids_list.append(record.id)
+        ids_set.add(record.id)
 vprint(ids_list)
 
 # Extract weights
@@ -94,7 +95,6 @@ print("Number of IDs:", len(ids_list))
 assert(len(weights_list) == len(ids_list))
 
 # Identify each speceis form each sequence using kraken
-ids_set = set(ids_list)
 idToSpecies = dict()
 speciesToProportion = dict()
 numSequencesInKraken = 0
@@ -116,6 +116,9 @@ with open(kraken_path) as infile:
             if (not species in speciesToProportion.keys()):
                 speciesToProportion[species] = 0
             speciesToProportion[species] += 1
+        else: 
+            if (id in ids_set):
+            idToSpecies[id] = UNKNOWN_SPECIES
         # Increment species count
 for species in speciesToProportion.keys():
     speciesToProportion[species] /= numSequencesInKraken
