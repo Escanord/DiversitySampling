@@ -12,10 +12,10 @@
 
 struct Node {
     public:
-        Node(std::string str, double score, double weight) {
-            str = str;
-            score = score;
-            weight = weight;
+        Node(std::string s, double k, double w) {
+            str = s;
+            score = k;
+            weight = w;
         }
 
         std::string str;
