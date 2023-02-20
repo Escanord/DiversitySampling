@@ -123,7 +123,7 @@ for (id, weight) in zip(ids_list, weights_list):
     species = idToSpecies[id]
     if (not species in speciesToEstimate.keys()):
         speciesToEstimate[species] = 0
-    speciesToEstimate += weight
+    speciesToEstimate[species] += weight
 for species in speciesToEstimate.keys():
     speciesToEstimate[species] /= total_weight
 
