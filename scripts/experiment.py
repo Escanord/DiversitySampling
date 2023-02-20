@@ -108,7 +108,7 @@ with open(kraken_path) as infile:
             species = int(chunks[2])
         else:
             species = UNCLASSIFIED_SPECIES
-        if (species == UNCLASSIFIED_SPECIES) #Skips unclassified species
+        if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
             continue
         # Map id to species
         if (id in ids_set):
@@ -125,7 +125,7 @@ speciesToEstimate = dict()
 total_weight = 0
 for (id, weight) in zip(ids_list, weights_list):
     species = idToSpecies[id]
-    if (species == UNCLASSIFIED_SPECIES) #Skips unclassified species
+    if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
         continue
     if (not species in speciesToEstimate.keys()):
         speciesToEstimate[species] = 0
