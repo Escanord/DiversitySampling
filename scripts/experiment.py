@@ -102,7 +102,7 @@ with open(kraken_path) as infile:
         numSequencesInKraken += 1
         # Extract information from kraken line
         chunks = line.split('\t')
-        classified = (chunks[0] == 'C')  
+        classified = (chunks[0].strip() == 'C')  
         id = chunks[1]
         if classified and chunks[2] != None:
             species = int(chunks[2])
