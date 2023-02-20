@@ -25,7 +25,7 @@ struct Node {
 
 struct Comp{
     bool operator()(const struct Node a, const struct Node b){
-        return a.score < b.score;
+        return a.score > b.score;
     }
 };
 
