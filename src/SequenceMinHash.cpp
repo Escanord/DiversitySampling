@@ -7,8 +7,9 @@ Rice University Invention & Patent or the author
 
 */
 
-SequenceMinHash::SequenceMinHash(int number_of_hashes){
+SequenceMinHash::SequenceMinHash(int number_of_hashes,  unsigned int seed){
     _numhashes = number_of_hashes; 
+    _seed = seed;
 }
 
 
@@ -31,11 +32,11 @@ void SequenceMinHash::getHash(size_t k, const std::string& sequence, int* hashes
 
         // for each kmer in the sequence
         for (int start = 0; (start + k + 1) < len; start++){
-            hashed_value = MurmurHash(seq + start, sizeof(char)*k, n); 
+            hashed_value = MurmurHash(seq + start, sizeof(char)*k, n + _seed); 
 
             if (hashed_value < minhashed_value){
                 minhashed_value = hashed_value;
-                hashes[n] = MurmurHash(seq + start, sizeof(char)*k, n*3); 
+                hashes[n] = MurmurHash(seq + start, sizeof(char)*k, n*3 + _seed); 
                 // proxy for returning the string itself
             }
         }

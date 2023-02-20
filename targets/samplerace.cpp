@@ -40,7 +40,7 @@ int main(int argc, char **argv){
     if (argc < 4){
         std::clog<<"Usage: "<<std::endl; 
         std::clog<<"samplerace <sample_size> <format> <input> <output>"; 
-        std::clog<<" [--range race_range] [--reps race_reps] [--hashes n_minhashes] [-k kmer_size]"<<std::endl; 
+        std::clog<<" [--range race_range] [--reps race_reps] [--hashes n_minhashes] [-k kmer_size] [--seed random_seed]"<<std::endl; 
         std::clog<<"Positional arguments: "<<std::endl; 
         std::clog<<"sample_size: integer representing how many elements to sample"<<std::endl; 
         std::clog<<"format: Either PE, SE, or I for paired-end, single-end, and interleaved paired reads"<<std::endl; 
@@ -52,6 +52,7 @@ int main(int argc, char **argv){
         std::clog<<"[--reps race_reps]: (Optional, default 10) Number of ACE repetitions (R)"<<std::endl;
         std::clog<<"[--hashes n_minhashes]: (Optional, default 1) Number of MinHashes for each ACE (n)"<<std::endl;
         std::clog<<"[--k kmer_size]: (Optional, default 16) Size of each MinHash k-mer (k)"<<std::endl;
+        std::clog<<"[--seed random_seed]: (Optional, default 0) The random seed to configure hash functions with"<<std::endl;
 
         std::clog<<std::endl<<"Example usage:"<<std::endl; 
         std::clog<<"samplerace 100 PE data/input-1.fastq data/input-2.fastq data/output-1.fastq data/output-2.fastq --range 100 --reps 50 --hashes 3 --k 5"<<std::endl; 
@@ -130,6 +131,7 @@ int main(int argc, char **argv){
     int race_repetitions = 10;
     int hash_power = 1;
     int kmer_k = 16;
+    unsigned int seed = clock();
 
     for (int i = 0; i < argc; ++i){
         if (std::strcmp("--range",argv[i]) == 0){
@@ -164,7 +166,18 @@ int main(int argc, char **argv){
                 return -1;
             }
         }
+
+         if (std::strcmp("--seed",argv[i]) == 0){
+            if ((i+1) < argc){
+                seed = std::stoi(argv[i+1]);
+            } else {
+                std::cerr<<"Invalid argument for optional parameter --seed"<<std::endl; 
+                return -1;
+            }
+        }
     }
+
+    srand(seed);
 
     // Check if arguments are valid
     if (sample_size <= 0){ std::cerr<<"Invalid value for parameter <sample_size>"<<std::endl; return -1; }
@@ -181,7 +194,7 @@ int main(int argc, char **argv){
     std::string chunk2;
 
     // set up the hash function that will be used to hash input sequences
-    SequenceMinHash hash = SequenceMinHash(race_repetitions*hash_power);
+    SequenceMinHash hash = SequenceMinHash(race_repetitions*hash_power, seed);
     int* raw_hashes = new int[race_repetitions*hash_power]; 
     int* rehashes = new int[race_repetitions];
 
