@@ -126,7 +126,11 @@ total_weight = 0
 for (id, weight) in zip(ids_list, weights_list):
     species = idToSpecies[id]
     if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
+        vprint("UNCLASSIFIED", id, weight)
         continue
+    else:
+        vprint("CLASSIFIED", id, weight)
+
     if (not species in speciesToEstimate.keys()):
         speciesToEstimate[species] = 0
     total_weight += weight
