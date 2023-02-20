@@ -78,7 +78,6 @@ with open(sample_path) as handle:
     for record in SeqIO.parse(handle, "fastq"):
         ids_list.append(record.id)
         ids_set.add(record.id)
-vprint(ids_list)
 
 # Extract weights
 total_weight = 0
@@ -123,7 +122,7 @@ speciesToEstimate = dict()
 for (id, weight) in zip(ids_list, weights_list):
     species = idToSpecies[id]
     if (not species in speciesToEstimate.keys()):
-        speciesToEstimate[species] == 0
+        speciesToEstimate[species] = 0
     speciesToEstimate += weight
 for species in speciesToEstimate.keys():
     speciesToEstimate[species] /= total_weight
