@@ -106,7 +106,10 @@ with open(kraken_path) as infile:
         chunks = line.split('\t')
         classified = (chunks[0] == 'C')  
         id = chunks[1]
-        species = (classified and int(chunks[2])) or UNKNOWN_SPECIES
+        if classified and chunks[2] != None:
+            species = int(chunks[2])
+        else:
+            species = UNKNOWN_SPECIES
         # Map id to species
         if (id in ids_set):
             idToSpecies[id] = species
