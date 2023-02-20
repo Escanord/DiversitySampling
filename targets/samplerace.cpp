@@ -216,10 +216,10 @@ int main(int argc, char **argv){
         // first rehash so that the arrays can fit into RACE
         rehash(raw_hashes, rehashes, race_repetitions, hash_power);
         // then simultaneously query and add 
-        double KDE = sketch.query_and_add(rehashes); 
+        long double KDE = (long double) sketch.query_and_add(rehashes); 
         // note: KDE is on a scale from [0,N] not the normalized interval [0,1]
 
-        double weight = (++t)/KDE; //TODO: Make this strategy variable
+        long double weight = ((long double) ++t)/ KDE;
   
         switch(format){
             case 1: // 1 = unpaired

@@ -16,10 +16,10 @@ Reservoir::~Reservoir(){
 	// delete &_pq;
 }
 
-void Reservoir::put(std::string element, double weight){
+void Reservoir::put(std::string element, long double weight){
 	
-	double r = (double) rand() / RAND_MAX;
-	double score = pow(r, 1/weight);
+	long double r = (long double) rand() / RAND_MAX;
+	long double score = pow(r, 1/weight);
 
 	_pq.emplace(element, score, weight);
 
