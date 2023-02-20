@@ -46,9 +46,9 @@ int main(int argc, char **argv){
         std::clog<<"[--seed random_seed]: (Optional, default 0) The random seed to configure hash functions with"<<std::endl;
 
         std::clog<<std::endl<<"Example usage:"<<std::endl; 
-        std::clog<<"samplerace 100 PE data/input-1.fastq data/input-2.fastq data/output-1.fastq data/output-2.fastq"<<std::endl; 
-        std::clog<<"samplerace 200 SE data/input.fastq data/output.fastq -seed 100"<<std::endl; 
-        std::clog<<"samplerace 300 SE data/input.fasta data/output.fasta"<<std::endl; 
+        std::clog<<"uniformsample 100 PE data/input-1.fastq data/input-2.fastq data/output-1.fastq data/output-2.fastq"<<std::endl; 
+        std::clog<<"uniformsample 200 SE data/input.fastq data/output.fastq -seed 100"<<std::endl; 
+        std::clog<<"uniformsample 300 SE data/input.fasta data/output.fasta"<<std::endl; 
         return -1; 
     }
 
