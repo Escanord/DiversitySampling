@@ -4,7 +4,7 @@
 CXX = g++
 CFLAGS = -O3 -std=c++11 #-fopenmp
 
-SRCS = SequenceMinHash.cpp io.cpp MurmurHash.cpp util.cpp RACE.cpp Reservoir.cpp
+SRCS = SequenceMinHash.cpp io.cpp MurmurHash.cpp util.cpp RACE.cpp Reservoir.cpp UniformReservoir.cpp
 SRCS_DIR = src/
 
 BUILD_DIR = build/
@@ -12,7 +12,7 @@ BIN_DIR = bin/
 INC := -I include
 
 # List of target executables
-TARGETS = samplerace.cpp
+TARGETS = samplerace.cpp uniformsample.cpp
 TARGETS_DIR = targets/
 
 # Everything beyond this point is determined from previous declarations, don't modify
