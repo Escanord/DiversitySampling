@@ -9,6 +9,8 @@
 #include <cstring>
 #include <algorithm>
 
+#define EPSILON 0.0000000001
+
 /*
 Copyright 2019, Benjamin Coleman, All rights reserved. 
 Free for research use. For commercial use, contact 
@@ -219,7 +221,7 @@ int main(int argc, char **argv){
         long double KDE = (long double) sketch.query_and_add(rehashes); 
         // note: KDE is on a scale from [0,N] not the normalized interval [0,1]
 
-        long double weight = ((long double) ++t)/ KDE;
+        long double weight = ((long double) ++t) / (KDE + EPSILON);
   
         switch(format){
             case 1: // 1 = unpaired
