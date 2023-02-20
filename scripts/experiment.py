@@ -1,6 +1,7 @@
 import os
 import subprocess
 import argparse
+from Bio import SeqIO
 
 repeat = 10
 
@@ -73,10 +74,9 @@ vprint("Kraken file can be located at " + kraken_path)
 
 # Extract ids from samples 
 ids_list = list()
-with open(sample_path) as infile:
-    for line in infile:
-        if line.startswith('@'):
-            ids_list.append(line.split(' ', 1)[0][1:])
+with open(sample_path) as handle:
+    for record in SeqIO.parse(handle, "fastq"):
+        ids_list.append(record.id)
 vprint(ids_list)
 
 # Extract weights
