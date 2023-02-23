@@ -72,9 +72,9 @@ else:
 
 
 # Identify each species form each sequence using kraken
-id_to_species = defaultdict(UNCLASSIFIED_SPECIES)
-species_to_true_proportion = defaultdict(0)
-species_to_error = defaultdict((0,0))
+id_to_species = defaultdict(lambda: UNCLASSIFIED_SPECIES)
+species_to_true_proportion = defaultdict(lambda: 0)
+species_to_error = defaultdict(lambda: (0,0))
 
 numSequencesInKraken = 0
 
@@ -134,7 +134,7 @@ for rep in range(args.repetions):
     assert(len(diverse_weights_list) == len(diverse_ids_list))
 
     # Compute uniform estimate
-    species_to_uniform_estimate = defaultdict(0)
+    species_to_uniform_estimate = defaultdict(lambda: 0)
     for id in uniform_ids_list:
         species_to_uniform_estimate[id] += 1
     total = len(uniform_ids_list)
@@ -142,7 +142,7 @@ for rep in range(args.repetions):
         species_to_uniform_estimate[id] /= total
     
     # Compute diverse estimate
-    species_to_diverse_estimate = defaultdict(0)
+    species_to_diverse_estimate = defaultdict(lambda: 0)
     total_weight = 0
     for (id, weight) in zip(diverse_ids_list, diverse_weights_list):
         species = id_to_species[id]
