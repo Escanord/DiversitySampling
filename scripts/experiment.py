@@ -147,11 +147,11 @@ for rep in range(args.repetions):
     total_weight = 0
     for (id, weight) in zip(diverse_ids_list, diverse_weights_list):
         species = id_to_species[id]
-        if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
-            vprint("UNCLASSIFIED", id, weight)
-            continue
-        else:
-            vprint("CLASSIFIED", id, weight)
+        # if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
+        #     vprint("UNCLASSIFIED", id, weight)
+        #     continue
+        # else:
+        #     vprint("CLASSIFIED", id, weight)
 
         if (not species in species_to_diverse_estimate.keys()):
             species_to_diverse_estimate[species] = 0
@@ -162,7 +162,7 @@ for rep in range(args.repetions):
 
 
     for species in species_to_true_proportion.keys():
-        if species in species_to_error.key():
+        if species in species_to_error.keys():
             species_to_error[species] = (0,0)
         a = species_to_true_proportion[species] or 0
         d = species_to_diverse_estimate[species] or 0
