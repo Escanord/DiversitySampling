@@ -13,18 +13,18 @@ UNCLASSIFIED_SPECIES = -1
 #     #     src_path+"out_race_"+str(size)+"_repeat_"+str(r), src_path+"race_"+str(size)+"_repeat_"+str(r)+".fastq"]) 
 #     pass 
 
-def run_diversity_sampling(fastq_file, seed):
+def run_diversity_sampling(fastq_file, sample_size, seed):
     output_file = f"diverse-sample_seed={seed}_{fastq_file}"
     t0 = time.time_ns()
-    subprocess.call(["./bin/diversesample", fastq_file, output_file, "--seed", str(seed)]) 
+    subprocess.call(["./bin/diversesample", str(sample_size), fastq_file, output_file, "--seed", str(seed)]) 
     t1 = time.time_ns()
     return (output_file, output_file+".weights", t1 - t0)
 
-def run_uniform_sampling(fastq_file, seed):
+def run_uniform_sampling(fastq_file, sample_size, seed):
     output_file = f"uniform-sample_seed={seed}_{fastq_file}"
     t0 = time.time_ns()
-    subprocess.call(["./bin/uniformsample", fastq_file, output_file, "--seed", str(seed)]) 
-    t1 = time.time_ns()
+    subprocess.call(["./bin/uniformsample", str(sample_size), fastq_file, output_file, "--seed", str(seed)]) 
+    t1 = time.time_ns()f
     return (output_file, t1 - t0)
 
 #Parse commandlines
@@ -105,12 +105,12 @@ for rep in range(args.repetions):
 
     #Run the different sampling approaches
     vprint("Running uniform sampling...")
-    (uniform_sample_path, uniform_time_elapsed) = run_uniform_sampling(fastq_path, args.seed)
+    (uniform_sample_path, uniform_time_elapsed) = run_uniform_sampling(fastq_path, args.sample_amount, args.seed)
     vprint(f" - Uniform samploing took {uniform_time_elapsed} ns")
     vprint(" - Uniform sample file can be located at " + uniform_sample_path)
 
     vprint("Running diversity sampling...")
-    (diverse_sample_path, diverse_weights_path, diverse_time_elapsed) = run_diversity_sampling(fastq_path, args.seed) 
+    (diverse_sample_path, diverse_weights_path, diverse_time_elapsed) = run_diversity_sampling(fastq_path, args.sample_amount,args.seed) 
     vprint(f" - Diversity sampling took {diverse_time_elapsed} ns")
     vprint(" - Diversity sample file can be located at " + diverse_sample_path)
     vprint(" - Diversity sample Weights file can be located at " + diverse_weights_path)
