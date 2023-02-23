@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('-f', '--fastq', help="fastq file pre sampling")
 
 parser.add_argument('-a', '--sample_amount', help="post sampling fastq file", default=1000, type=int)  
-parser.add_argument('-s', '--seed', help="seed to use", default=random.randint(), type=int)
+parser.add_argument('-s', '--seed', help="seed to use", default=random.randint(0, 1 << 32), type=int)
 parser.add_argument('-r', '--repetions', help="number of times to repeat experiment", default=1, type=int)
 
 parser.add_argument('-k', '--kraken', help="(Optional) kraken of original fastq file")
@@ -52,7 +52,7 @@ def vprint(*x):
 # Generate a seed for every repetition
 vprint("Using seed "+args.seed)
 random.seed(args.seed)
-seeds = [random.randint() for _ in range(args.repetions)]
+seeds = [random.randint(0, 1 << 32) for _ in range(args.repetions)]
 
 # Validate input
 if (args.fastq == None and (args.sample == None and args.weights == None)):
