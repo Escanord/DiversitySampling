@@ -54,14 +54,6 @@ vprint("Using sourceseed", args.seed)
 random.seed(args.seed)
 seeds = [random.randint(0, 1 << 32) for _ in range(args.repetions)]
 
-# Validate input
-if (args.fastq == None and (args.sample == None and args.weights == None)):
-        raise Exception("Invalid arguments. Need to provide --fastq or --sample and --weights.") 
-if (args.fastq != None and (args.sample == None or args.weights == None)):
-        raise Exception("Invalid arguments. Both --sample and --weights need to specified or neighter.") 
-if (args.kraken == None and args.fastq == None):
-    raise Exception("fastq stream must be specificied if kraken has not been specified")
-
 # Extract files
 fastq_path = args.fastq
 kraken_path = None
