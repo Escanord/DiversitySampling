@@ -24,7 +24,7 @@ def run_uniform_sampling(fastq_file, sample_size, seed):
     output_file = f"uniform-sample_seed={seed}_{fastq_file}"
     t0 = time.time_ns()
     subprocess.call(["./bin/uniformsample", str(sample_size), fastq_file, output_file, "--seed", str(seed)]) 
-    t1 = time.time_ns()f
+    t1 = time.time_ns()
     return (output_file, t1 - t0)
 
 #Parse commandlines
