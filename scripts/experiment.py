@@ -37,7 +37,7 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('-f', '--fastq', help="fastq file pre sampling")
 
-parser.add_argument('-a', '--sample_amount', help="post sampling fastq file", default=1000, type=int)  
+parser.add_argument('-a', '--sample_amount', help="post sampling fastq file", default=10000, type=int)  
 parser.add_argument('-s', '--seed', help="seed to use", default=random.randint(0, 1 << 31), type=int)
 parser.add_argument('-r', '--repetions', help="number of times to repeat experiment", default=1, type=int)
 
