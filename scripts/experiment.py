@@ -16,14 +16,14 @@ UNCLASSIFIED_SPECIES = -1
 def run_diversity_sampling(fastq_file, sample_size, seed):
     output_file = f"diverse-sample_seed={seed}_{os.path.basename(fastq_file)}"
     t0 = time.time_ns()
-    subprocess.call(["./bin/diversesample", str(sample_size), fastq_file, output_file, "--seed", str(seed)]) 
+    subprocess.call(["./bin/diversesample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed)]) 
     t1 = time.time_ns()
     return (output_file, output_file+".weights", t1 - t0)
 
 def run_uniform_sampling(fastq_file, sample_size, seed):
     output_file = f"uniform-sample_seed={seed}_{os.path.basename(fastq_file)}"
     t0 = time.time_ns()
-    subprocess.call(["./bin/uniformsample", str(sample_size), fastq_file, output_file, "--seed", str(seed)]) 
+    subprocess.call(["./bin/uniformsample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed)]) 
     t1 = time.time_ns()
     return (output_file, t1 - t0)
 
