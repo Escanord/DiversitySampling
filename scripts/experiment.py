@@ -50,7 +50,7 @@ def vprint(*x):
         print(*x)
 
 # Generate a seed for every repetition
-vprint("Using seed "+args.seed)
+vprint("Using sourceseed", args.seed)
 random.seed(args.seed)
 seeds = [random.randint(0, 1 << 32) for _ in range(args.repetions)]
 
