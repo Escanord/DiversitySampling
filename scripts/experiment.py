@@ -4,6 +4,8 @@ import argparse
 import random
 import time 
 
+from collections import defaultdict
+
 from Bio import SeqIO
 
 UNCLASSIFIED_SPECIES = -1
@@ -70,10 +72,11 @@ else:
 
 
 # Identify each species form each sequence using kraken
-id_to_species = dict()
-species_to_true_proportion = dict()
+id_to_species = defaultdict(UNCLASSIFIED_SPECIES)
+species_to_true_proportion = defaultdict(0)
+species_to_error = defaultdict((0,0))
+
 numSequencesInKraken = 0
-species_to_error = dict()
 
 # Extract species "true" proportion
 with open(kraken_path) as infile:
@@ -92,21 +95,19 @@ with open(kraken_path) as infile:
         # Increment species count
         if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
             continue
-        if (not species in species_to_true_proportion.keys()):
-            species_to_true_proportion[species] = 0
         species_to_true_proportion[species] += 1
 for species in species_to_true_proportion.keys():
     species_to_true_proportion[species] /= numSequencesInKraken
 
 for rep in range(args.repetions):
-    vprint(f"Running repition #{rep}")
+    vprint(f"Running repition #{rep+1}")
     seed = seeds[rep]
     vprint(f"seed={seed}")
 
     #Run the different sampling approaches
     vprint("Running uniform sampling...")
     (uniform_sample_path, uniform_time_elapsed) = run_uniform_sampling(fastq_path, args.sample_amount, args.seed)
-    vprint(f" - Uniform samploing took {uniform_time_elapsed} ns")
+    vprint(f" - Uniform sampling took {uniform_time_elapsed} ns")
     vprint(" - Uniform sample file can be located at " + uniform_sample_path)
 
     vprint("Running diversity sampling...")
@@ -133,28 +134,23 @@ for rep in range(args.repetions):
     assert(len(diverse_weights_list) == len(diverse_ids_list))
 
     # Compute uniform estimate
-    species_to_uniform_estimate = dict()
+    species_to_uniform_estimate = defaultdict(0)
     for id in uniform_ids_list:
-        if not id in species_to_uniform_estimate.keys():
-            species_to_uniform_estimate[id] = 0
         species_to_uniform_estimate[id] += 1
     total = len(uniform_ids_list)
     for id in uniform_ids_list:
         species_to_uniform_estimate[id] /= total
     
     # Compute diverse estimate
-    species_to_diverse_estimate = dict()
+    species_to_diverse_estimate = defaultdict(0)
     total_weight = 0
     for (id, weight) in zip(diverse_ids_list, diverse_weights_list):
         species = id_to_species[id]
-        # if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
-        #     vprint("UNCLASSIFIED", id, weight)
-        #     continue
+        if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
+            # vprint("UNCLASSIFIED", id, weight)
+            continue
         # else:
-        #     vprint("CLASSIFIED", id, weight)
-
-        if (not species in species_to_diverse_estimate.keys()):
-            species_to_diverse_estimate[species] = 0
+        #     # vprint("CLASSIFIED", id, weight)
         total_weight += weight
         species_to_diverse_estimate[species] += weight
     for species in species_to_diverse_estimate.keys():
@@ -162,14 +158,11 @@ for rep in range(args.repetions):
 
 
     for species in species_to_true_proportion.keys():
-        if species in species_to_error.keys():
-            species_to_error[species] = (0,0)
-        a = species_to_true_proportion[species] or 0
-        d = species_to_diverse_estimate[species] or 0
-        u = species_to_uniform_estimate[species] or 0
+        a = species_to_true_proportion[species]
+        d = species_to_diverse_estimate[species]
+        u = species_to_uniform_estimate[species]
         err = species_to_error[species]
-        species_to_error[species] = (err[0] + (a - d)**2, err[1] + (a-u)**2);
-        # rows.append((species, species_to_true_proportion[species] or 0, species_to_diverse_estimate[species] or 0, species_to_uniform_estimate[species] or 0))
+        species_to_error[species] = (err[0] + abs(a - d), err[1] + abs((a-u)));
 
 rows = []
 for species in species_to_error.keys():
