@@ -100,7 +100,7 @@ for species in species_to_true_proportion.keys():
     species_to_true_proportion[species] /= numSequencesInKraken
 
 for rep in range(args.repetions):
-    vprint(f"Running repition #{rep+1}")
+    vprint(f"Running repitition #{rep+1}")
     seed = seeds[rep]
     vprint(f"seed={seed}")
 
