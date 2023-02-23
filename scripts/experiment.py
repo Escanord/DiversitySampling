@@ -88,8 +88,7 @@ with open(kraken_path) as infile:
         else:
             species = UNCLASSIFIED_SPECIES
         # Map id to species
-        if (id in ids_sampled_set):
-            id_to_species[id] = species
+        id_to_species[id] = species
         # Increment species count
         if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
             continue
@@ -116,18 +115,15 @@ for rep in range(args.repetions):
     vprint(" - Diversity sample file can be located at " + diverse_sample_path)
     vprint(" - Diversity sample Weights file can be located at " + diverse_weights_path)
 
-    ids_sampled_set = set()
     # Extract ids from samples 
     uniform_ids_list = list()
     with open(uniform_sample_path) as handle:
         for record in SeqIO.parse(handle, "fastq"):
             uniform_ids_list.append(record.id)
-            ids_sampled_set.add(record.id)
     diverse_ids_list = list()
     with open(diverse_sample_path) as handle:
         for record in SeqIO.parse(handle, "fastq"):
             diverse_ids_list.append(record.id)
-            ids_sampled_set.add(record.id)
     diverse_weights_list = list() 
     with open(diverse_weights_path) as infile:
         for line in infile:
