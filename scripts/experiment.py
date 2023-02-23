@@ -166,8 +166,8 @@ for rep in range(args.repetions):
 
 rows = []
 for species in species_to_error.keys():
-    errors = species_to_error[species] or (0,0)
-    rows.append((species, species_to_true_proportion[species], errors[0], errors[1]))
+    errors = species_to_error[species]
+    rows.append((species, species_to_true_proportion[species], errors[0]/args.sample_amount, errors[1]/args.sample_amount))
 rows.sort(key=lambda row: row[1], reverse=True)
 
 for row in [("Species", "Proportion", "Diverse Estimate Error", "Uniform Estimate Error")] + rows:
