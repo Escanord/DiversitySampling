@@ -4,6 +4,7 @@ import argparse
 import random
 import time 
 
+from PyGnuplot import gp
 from collections import defaultdict
 
 from Bio import SeqIO
@@ -164,11 +165,20 @@ for rep in range(args.repetions):
         err = species_to_error[species]
         species_to_error[species] = (err[0] + abs(a - d), err[1] + abs((a-u)));
 
+# Organize results
 rows = []
 for species in species_to_error.keys():
     errors = species_to_error[species]
     rows.append((species, species_to_true_proportion[species], errors[0]/args.sample_amount, errors[1]/args.sample_amount))
 rows.sort(key=lambda row: row[1], reverse=True)
 
+# Print results to terminal
 for row in [("Species", "Proportion", "Diverse Estimate Error", "Uniform Estimate Error")] + rows:
     print("{: >10} {: >25} {: >25} {: >25}".format(*row))
+
+# Create plots
+f1 = gp()
+x = [i + 1 for i in range(len(rows))]
+f1.plot([x, [r[2] for r in rows] ], "Diverse Estimate Error")
+f1.plot([x, [r[3] for r in rows] ], "Uniform Estimate Error")
+
