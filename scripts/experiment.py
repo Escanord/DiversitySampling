@@ -180,8 +180,9 @@ x = [i + 1 for i in range(len(rows))]
 y_diverse = [r[2] for r in rows] 
 y_uniform = [r[3] for r in rows]
 
-plt.plot(x, y_diverse, label="Diverse Sampling")
-plt.plot(x, y_uniform, label="Uniform Sampling")
+plt.plot(x[100:], y_diverse[100:], label="Diverse Sampling")
+plt.plot(x[100:], y_uniform[100:], label="Uniform Sampling")
+plt.legend()
 
 plt.xlabel("Species")
 plt.ylabel("Estimate Error")
