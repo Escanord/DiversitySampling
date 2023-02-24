@@ -177,8 +177,6 @@ for row in [("Species", "Proportion", "Diverse Estimate Error", "Uniform Estimat
 
 # Create plots
 x = [i + 1 for i in range(len(rows))]
-
-x = [0, 1, 2, 3, 4, 5]
 y_diverse = [r[2] for r in rows] 
 y_uniform = [r[3] for r in rows]
 
