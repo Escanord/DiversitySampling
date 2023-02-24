@@ -188,5 +188,5 @@ plt.plot(x, y_uniform, label="Uniform Sampling")
 plt.xlabel("Species")
 plt.ylabel("Estimate Error")
 plt.title('Uniform vs. Diverse Proportion Estimate Error')
-plt.show()
+plt.savefig("plot.png")
 
