@@ -181,4 +181,5 @@ f1 = gp()
 x = [i + 1 for i in range(len(rows))]
 f1.plot([x, [r[2] for r in rows] ], "Diverse Estimate Error")
 f1.plot([x, [r[3] for r in rows] ], "Uniform Estimate Error")
+f1.p('myfigure.png')
 
