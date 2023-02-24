@@ -4,9 +4,8 @@ import argparse
 import random
 import time 
 
-from PyGnuplot import gp
+import matplotlib.pyplot as plt
 from collections import defaultdict
-
 from Bio import SeqIO
 
 UNCLASSIFIED_SPECIES = -1
@@ -177,9 +176,17 @@ for row in [("Species", "Proportion", "Diverse Estimate Error", "Uniform Estimat
     print("{: >10} {: >25} {: >25} {: >25}".format(*row))
 
 # Create plots
-f1 = gp()
 x = [i + 1 for i in range(len(rows))]
-f1.plot([x, [r[2] for r in rows] ], "Diverse Estimate Error")
-f1.plot([x, [r[3] for r in rows] ], "Uniform Estimate Error")
-f1.p('myfigure.png')
+
+x = [0, 1, 2, 3, 4, 5]
+y_diverse = [r[2] for r in rows] 
+y_uniform = [r[3] for r in rows]
+
+plt.plot(x, y_diverse, label="Diverse Sampling")
+plt.plot(x, y_uniform, label="Uniform Sampling")
+
+plt.xlabel("Species")
+plt.ylabel("Estimate Error")
+plt.title('Uniform vs. Diverse Proportion Estimate Error')
+plt.show()
 
