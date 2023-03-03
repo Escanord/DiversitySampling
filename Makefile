@@ -37,6 +37,7 @@ $(BINARIES): $(addprefix $(TARGETS_DIR), $(TARGETS)) $(OBJECTS) | $(BIN_DIR:/=)
 clean:
 	rm -f $(OBJECTS); 
 	rm -f $(BINARIES); 
+	rm -f  rm uniform-sample_seed\=*
 
 .PHONY: clean targets binaries all 
 

@@ -39,7 +39,7 @@ parser.add_argument('-f', '--fastq', help="fastq file pre sampling")
 
 parser.add_argument('-a', '--sample_amount', help="post sampling fastq file", default=10000, type=int)  
 parser.add_argument('-s', '--seed', help="seed to use", default=random.randint(0, 1 << 31), type=int)
-parser.add_argument('-r', '--repetions', help="number of times to repeat experiment", default=1, type=int)
+parser.add_argument('-r', '--repetitions', help="number of times to repeat experiment", default=1, type=int)
 
 parser.add_argument('-k', '--kraken', help="(Optional) kraken of original fastq file")
 parser.add_argument('-v', '--verbose', action='store_true')  # on/off flag
@@ -54,7 +54,7 @@ def vprint(*x):
 # Generate a seed for every repetition
 vprint("Using sourceseed", args.seed)
 random.seed(args.seed)
-seeds = [random.randint(0, 1 << 31) for _ in range(args.repetions)]
+seeds = [random.randint(0, 1 << 31) for _ in range(args.repetitions)]
 
 # Extract files
 fastq_path = args.fastq
@@ -76,12 +76,10 @@ id_to_species = defaultdict(lambda: UNCLASSIFIED_SPECIES)
 species_to_true_proportion = defaultdict(lambda: 0)
 species_to_error = defaultdict(lambda: (0,0))
 
-numSequencesInKraken = 0
-
 # Extract species "true" proportion
+numClassifiedSpecies = 0
 with open(kraken_path) as infile:
     for line in infile:
-        numSequencesInKraken += 1
         # Extract information from kraken line
         chunks = line.split('\t')
         classified = (chunks[0].strip() == 'C')  
@@ -95,11 +93,12 @@ with open(kraken_path) as infile:
         # Increment species count
         if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
             continue
+        numClassifiedSpecies += 1
         species_to_true_proportion[species] += 1
 for species in species_to_true_proportion.keys():
-    species_to_true_proportion[species] /= numSequencesInKraken
+    species_to_true_proportion[species] /= numClassifiedSpecies
 
-for rep in range(args.repetions):
+for rep in range(args.repetitions):
     vprint(f"Running repitition #{rep+1}")
     seed = seeds[rep]
     vprint(f"seed={seed}")
@@ -134,33 +133,45 @@ for rep in range(args.repetions):
     assert(len(diverse_weights_list) == len(diverse_ids_list))
 
     # Compute uniform estimate
+    uniform_unique_species = set()
     species_to_uniform_estimate = defaultdict(lambda: 0)
+    total = 0
     for id in uniform_ids_list:
-        species_to_uniform_estimate[id] += 1
-    total = len(uniform_ids_list)
-    for id in uniform_ids_list:
-        species_to_uniform_estimate[id] /= total
-    
+        species = id_to_species[id]
+        if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
+            continue
+        uniform_unique_species.add(species)
+        species_to_uniform_estimate[species] += 1
+        total += 1
+
+    for species in species_to_uniform_estimate.keys():
+        species_to_uniform_estimate[species] /= total
+    print(f"Uniform recognized {len(uniform_unique_species)} distinct species!")
+
     # Compute diverse estimate
     species_to_diverse_estimate = defaultdict(lambda: 0)
     total_weight = 0
+    diverse_unique_species = set()
     for (id, weight) in zip(diverse_ids_list, diverse_weights_list):
         species = id_to_species[id]
         if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
-            # vprint("UNCLASSIFIED", id, weight)
             continue
-        # else:
-        #     # vprint("CLASSIFIED", id, weight)
+        diverse_unique_species.add(species)
         total_weight += weight
         species_to_diverse_estimate[species] += weight
     for species in species_to_diverse_estimate.keys():
         species_to_diverse_estimate[species] /= total_weight
 
+    print(f"Diverse recognized {len(diverse_unique_species)} distinct species!")
 
     for species in species_to_true_proportion.keys():
         a = species_to_true_proportion[species]
         d = species_to_diverse_estimate[species]
         u = species_to_uniform_estimate[species]
+
+        if (d > a):
+            print(f"[Diverse overestimates]:\n\tSpecies: {species}\n\tTruth: {a}\n\tDiverse Estimate: {d}\n\tUniform Estimate: {u}")
+        
         err = species_to_error[species]
         species_to_error[species] = (err[0] + abs(a - d), err[1] + abs((a-u)));
 
@@ -168,7 +179,7 @@ for rep in range(args.repetions):
 rows = []
 for species in species_to_error.keys():
     errors = species_to_error[species]
-    rows.append((species, species_to_true_proportion[species], errors[0]/args.sample_amount, errors[1]/args.sample_amount))
+    rows.append((species, species_to_true_proportion[species], errors[0]/args.repetitions, errors[1]/args.repetitions))
 rows.sort(key=lambda row: row[1], reverse=True)
 
 # Print results to terminal
@@ -176,16 +187,20 @@ for row in [("Species", "Proportion", "Diverse Estimate Error", "Uniform Estimat
     print("{: >10} {: >25} {: >25} {: >25}".format(*row))
 
 # Create plots
+ignore_first = 0
+
 x = [i + 1 for i in range(len(rows))]
 y_diverse = [r[2] for r in rows] 
 y_uniform = [r[3] for r in rows]
 
-plt.plot(x, y_diverse, "-b", label="Diverse Sampling",linestyle="",marker="o")
-plt.plot(x, y_uniform, "-r", label="Uniform Sampling",linestyle="",marker="o")
+plt.yscale("log")
+
+plt.plot(x[ignore_first:], y_diverse[ignore_first:], "-b", label="Diverse Sampling",linestyle="",marker="+")
+plt.plot(x[ignore_first:], y_uniform[ignore_first:], "-r", label="Uniform Sampling",linestyle="",marker="x")
 plt.legend(loc="upper right")
 
 plt.xlabel("Species")
-plt.ylabel("Estimate Error")
+plt.ylabel("Estimate Error (Log Scaled)")
 plt.title('Uniform vs. Diverse Proportion Estimate Error')
 plt.savefig("plot.png")
 

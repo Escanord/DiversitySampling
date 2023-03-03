@@ -49,7 +49,7 @@ int main(int argc, char **argv){
         
         std::clog<<"Optional arguments: "<<std::endl; 
         std::clog<<"[--range race_range]: (Optional, default 10000) Hash range for each ACE (B)"<<std::endl;
-        std::clog<<"[--reps race_reps]: (Optional, default 10) Number of ACE repetitions (R)"<<std::endl;
+        std::clog<<"[--reps race_reps]: (Optional, default 100) Number of ACE repetitions (R)"<<std::endl;
         std::clog<<"[--hashes n_minhashes]: (Optional, default 1) Number of MinHashes for each ACE (n)"<<std::endl;
         std::clog<<"[--k kmer_size]: (Optional, default 16) Size of each MinHash k-mer (k)"<<std::endl;
         std::clog<<"[--seed random_seed]: (Optional, default 0) The random seed to configure hash functions with"<<std::endl;
@@ -128,7 +128,7 @@ int main(int argc, char **argv){
 
     // OPTIONAL ARGUMENTS
     int race_range = 10000;
-    int race_repetitions = 10;
+    int race_repetitions = 20;
     int hash_power = 1;
     int kmer_k = 16;
     unsigned int seed = clock();
