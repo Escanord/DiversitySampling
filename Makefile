@@ -38,6 +38,8 @@ clean:
 	rm -f $(OBJECTS); 
 	rm -f $(BINARIES); 
 	rm -f  rm uniform-sample_seed\=*
+	rm -f  rm diverse-sample_seed\=*
+	rm -f out.txt
 
 .PHONY: clean targets binaries all 
 

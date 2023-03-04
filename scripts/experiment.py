@@ -3,6 +3,7 @@ import subprocess
 import argparse
 import random
 import time 
+import statistics
 
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -73,9 +74,9 @@ else:
 
 # Identify each species form each sequence using kraken
 id_to_species = defaultdict(lambda: UNCLASSIFIED_SPECIES)
-species_to_true_proportion = defaultdict(lambda: 0)
-species_to_error_sum = defaultdict(lambda: (0,0))
-species_to_estimate_sum = defaultdict(lambda: (0,0))
+true_proportion = defaultdict(lambda: 0)
+all_diverse_estimates = defaultdict(lambda: list())
+all_uniform_estimates = defaultdict(lambda: list())
 
 # Extract species "true" proportion
 numClassifiedSpecies = 0
@@ -95,9 +96,9 @@ with open(kraken_path) as infile:
         if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
             continue
         numClassifiedSpecies += 1
-        species_to_true_proportion[species] += 1
-for species in species_to_true_proportion.keys():
-    species_to_true_proportion[species] /= numClassifiedSpecies
+        true_proportion[species] += 1
+for species in true_proportion.keys():
+    true_proportion[species] /= numClassifiedSpecies
 
 for rep in range(args.repetitions):
     vprint(f"Running repitition #{rep+1}")
@@ -135,23 +136,23 @@ for rep in range(args.repetitions):
 
     # Compute uniform estimate
     uniform_unique_species = set()
-    species_to_uniform_estimate = defaultdict(lambda: 0)
+    uniform_estimate = defaultdict(lambda: 0)
     total = 0
     for id in uniform_ids_list:
         species = id_to_species[id]
         if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
             continue
         uniform_unique_species.add(species)
-        species_to_uniform_estimate[species] += 1
+        uniform_estimate[species] += 1
         total += 1
 
-    for species in species_to_uniform_estimate.keys():
-        species_to_uniform_estimate[species] /= total
+    for species in uniform_estimate.keys():
+        uniform_estimate[species] /= total
 
     print(f"Uniform recognized {len(uniform_unique_species)} distinct species!")
 
     # Compute diverse estimate
-    species_to_diverse_estimate = defaultdict(lambda: 0)
+    diverse_estimate = defaultdict(lambda: 0)
     total_weight = 0
     diverse_unique_species = set()
     for (id, weight) in zip(diverse_ids_list, diverse_weights_list):
@@ -160,59 +161,57 @@ for rep in range(args.repetitions):
             continue
         diverse_unique_species.add(species)
         total_weight += weight
-        species_to_diverse_estimate[species] += weight
-    for species in species_to_diverse_estimate.keys():
-        species_to_diverse_estimate[species] /= total_weight
+        diverse_estimate[species] += weight
+    for species in diverse_estimate.keys():
+        diverse_estimate[species] /= total_weight
 
     print(f"Diverse recognized {len(diverse_unique_species)} distinct species!")
 
-    for species in species_to_true_proportion.keys():
-        a = species_to_true_proportion[species]
-        d = species_to_diverse_estimate[species]
-        u = species_to_uniform_estimate[species]
-
-        (d_curr, u_curr) = species_to_estimate_sum[species]
-        species_to_estimate_sum[species] = (d_curr + d, u_curr + u)
-
-        if (d > a):
-            print(f"[Diverse overestimates]:\n\tSpecies: {species}\n\tTruth: {a}\n\tDiverse Estimate: {d}\n\tUniform Estimate: {u}")
-        
-        (d_err_curr, u_err_curr) = species_to_error_sum[species]
-        species_to_error_sum[species] = (d_err_curr + abs(a - d), u_err_curr+ abs(a - u));
+    for species in true_proportion.keys():
+        all_diverse_estimates[species].append(diverse_estimate[species])
+        all_uniform_estimates[species].append(uniform_estimate[species])
 
 # Organize results
 rows = []
-for species in species_to_error_sum.keys():
-    (d_err, u_err) = species_to_error_sum[species]
-    (d_est, u_est) = species_to_estimate_sum[species]
+for species in true_proportion.keys():
+    true_pro = true_proportion[species]
+    d_est = statistics.median(all_diverse_estimates[species])
+    u_est = statistics.median(all_uniform_estimates[species])
+    rows.append((species, true_pro, d_est, u_est))
 
-    true_pro = species_to_true_proportion[species]
-
-    r = args.repetitions
-    rows.append((species, true_pro, d_est, u_est, d_err, u_err))
 rows.sort(key=lambda row: row[1], reverse=True)
 
 # Print results to terminal
-for row in [("Species", "Proportion", "Diverse Estimate Error", "Uniform Estimate Error")] + rows:
+for row in [("Species", "Proportion", "Diverse Estimate (Median)", "Uniform Estimate (Median)")] + rows:
     print("{: >10} {: >25} {: >25} {: >25}".format(*row))
 
 filtered_rows = []
 # Filter for only infrequent species
-for row in rows:
-    (species, true_pro, d_est, u_est, d_err, u_err) = row
-    if true_pro < 0.005:
-        filtered_rows.append(row)
-rows = filtered_rows
+
+# LIMIT = 1e-3
+# for row in rows:
+#     (species, true_pro, d_est, u_est) = row
+#     if true_pro < LIMIT:
+#         filtered_rows.append(row)
+# rows = filtered_rows
 
 # Create plots
 
-x = [true_pro for (species, true_pro, d_est, u_est, d_err, u_err) in rows]
-y_diverse = [d_est for (species, true_pro, d_est, u_est, d_err, u_err) in rows] 
-y_uniform = [u_est for (species, true_pro, d_est, u_est, d_err, u_err) in rows]
-y_true = [true_pro for (species, true_pro, d_est, u_est, d_err, u_err) in rows]
+ignore = 500
+
+rows = rows[ignore:]
+limit = rows[0][1]
+
+x = [true_pro for (species, true_pro, d_est, u_est) in rows]
+y_diverse = [d_est for (species, true_pro, d_est, u_est) in rows]
+y_uniform = [u_est for (species, true_pro, d_est, u_est) in rows]
+y_true = [true_pro for (species, true_pro, d_est, u_est) in rows]
 
 # plt.yscale("log")
 # plt.xscale("log")
+
+plt.xlim([0, limit])
+plt.ylim([0, limit])
 
 plt.plot(x, y_diverse, "-b", label="Diverse Sampling",linestyle="",marker="+")
 plt.plot(x, y_uniform, "-r", label="Uniform Sampling",linestyle="",marker="x")

@@ -235,7 +235,8 @@ int main(int argc, char **argv){
         // note: KDE is on a scale from [0,N] not the normalized interval [0,1]
 
         long double weight = ((long double) ++t) / (KDE + EPSILON);
-  
+        // long double weight = 1 / (KDE + EPSILON);
+
         switch(format){
             case 1: // 1 = unpaired
             case 2: // 2 = interleaved
