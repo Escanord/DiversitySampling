@@ -74,7 +74,8 @@ else:
 # Identify each species form each sequence using kraken
 id_to_species = defaultdict(lambda: UNCLASSIFIED_SPECIES)
 species_to_true_proportion = defaultdict(lambda: 0)
-species_to_error = defaultdict(lambda: (0,0))
+species_to_error_sum = defaultdict(lambda: (0,0))
+species_to_estimate_sum = defaultdict(lambda: (0,0))
 
 # Extract species "true" proportion
 numClassifiedSpecies = 0
@@ -146,6 +147,7 @@ for rep in range(args.repetitions):
 
     for species in species_to_uniform_estimate.keys():
         species_to_uniform_estimate[species] /= total
+
     print(f"Uniform recognized {len(uniform_unique_species)} distinct species!")
 
     # Compute diverse estimate
@@ -169,38 +171,57 @@ for rep in range(args.repetitions):
         d = species_to_diverse_estimate[species]
         u = species_to_uniform_estimate[species]
 
+        (d_curr, u_curr) = species_to_estimate_sum[species]
+        species_to_estimate_sum[species] = (d_curr + d, u_curr + u)
+
         if (d > a):
             print(f"[Diverse overestimates]:\n\tSpecies: {species}\n\tTruth: {a}\n\tDiverse Estimate: {d}\n\tUniform Estimate: {u}")
         
-        err = species_to_error[species]
-        species_to_error[species] = (err[0] + abs(a - d), err[1] + abs((a-u)));
+        (d_err_curr, u_err_curr) = species_to_error_sum[species]
+        species_to_error_sum[species] = (d_err_curr + abs(a - d), u_err_curr+ abs(a - u));
 
 # Organize results
 rows = []
-for species in species_to_error.keys():
-    errors = species_to_error[species]
-    rows.append((species, species_to_true_proportion[species], errors[0]/args.repetitions, errors[1]/args.repetitions))
+for species in species_to_error_sum.keys():
+    (d_err, u_err) = species_to_error_sum[species]
+    (d_est, u_est) = species_to_estimate_sum[species]
+
+    true_pro = species_to_true_proportion[species]
+
+    r = args.repetitions
+    rows.append((species, true_pro, d_est, u_est, d_err, u_err))
 rows.sort(key=lambda row: row[1], reverse=True)
 
 # Print results to terminal
 for row in [("Species", "Proportion", "Diverse Estimate Error", "Uniform Estimate Error")] + rows:
     print("{: >10} {: >25} {: >25} {: >25}".format(*row))
 
+filtered_rows = []
+# Filter for only infrequent species
+for row in rows:
+    (species, true_pro, d_est, u_est, d_err, u_err) = row
+    if true_pro < 0.005:
+        filtered_rows.append(row)
+rows = filtered_rows
+
 # Create plots
-ignore_first = 0
 
-x = [i + 1 for i in range(len(rows))]
-y_diverse = [r[2] for r in rows] 
-y_uniform = [r[3] for r in rows]
+x = [true_pro for (species, true_pro, d_est, u_est, d_err, u_err) in rows]
+y_diverse = [d_est for (species, true_pro, d_est, u_est, d_err, u_err) in rows] 
+y_uniform = [u_est for (species, true_pro, d_est, u_est, d_err, u_err) in rows]
+y_true = [true_pro for (species, true_pro, d_est, u_est, d_err, u_err) in rows]
 
-plt.yscale("log")
+# plt.yscale("log")
+# plt.xscale("log")
 
-plt.plot(x[ignore_first:], y_diverse[ignore_first:], "-b", label="Diverse Sampling",linestyle="",marker="+")
-plt.plot(x[ignore_first:], y_uniform[ignore_first:], "-r", label="Uniform Sampling",linestyle="",marker="x")
-plt.legend(loc="upper right")
+plt.plot(x, y_diverse, "-b", label="Diverse Sampling",linestyle="",marker="+")
+plt.plot(x, y_uniform, "-r", label="Uniform Sampling",linestyle="",marker="x")
+plt.plot(x, y_true, color="black", label="Ideal Estimate",linestyle="dashed",marker="")
 
-plt.xlabel("Species")
-plt.ylabel("Estimate Error (Log Scaled)")
-plt.title('Uniform vs. Diverse Proportion Estimate Error')
+plt.legend(loc="upper left")
+
+plt.xlabel("True Proportion")
+plt.ylabel("Proportion Estimate")
+plt.title('Estimates vs. Species Proportions')
 plt.savefig("plot.png")
 
