@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 from Bio import SeqIO
 
-UNCLASSIFIED_SPECIES = -1
+UNCLASSIFIED_SPECIES = 0
 
 # def run_kraken(fastq_file, seed):
 #     # subprocess.call(["kraken2","--db", "/scratch1/zx22/bio/refseq214", "--threads", "12","--output",\
@@ -102,12 +102,12 @@ for rep in range(args.repetitions):
 
     #Run the different sampling approaches
     vprint("Running uniform sampling...")
-    (uniform_sample_path, uniform_time_elapsed) = run_uniform_sampling(fastq_path, args.sample_amount, args.seed)
+    (uniform_sample_path, uniform_time_elapsed) = run_uniform_sampling(fastq_path, args.sample_amount, seed)
     vprint(f" - Uniform sampling took {uniform_time_elapsed} ns")
     vprint(" - Uniform sample file can be located at " + uniform_sample_path)
 
     vprint("Running diversity sampling...")
-    (diverse_sample_path, diverse_weights_path, diverse_time_elapsed) = run_diversity_sampling(fastq_path, args.sample_amount,args.seed) 
+    (diverse_sample_path, diverse_weights_path, diverse_time_elapsed) = run_diversity_sampling(fastq_path, args.sample_amount, seed) 
     vprint(f" - Diversity sampling took {diverse_time_elapsed} ns")
     vprint(" - Diversity sample file can be located at " + diverse_sample_path)
     vprint(" - Diversity sample Weights file can be located at " + diverse_weights_path)
@@ -167,7 +167,7 @@ rows.sort(key=lambda row: row[1], reverse=True)
 for row in [("Species", "Proportion", "Diverse Estimate (Median)", "Uniform Estimate (Median)")] + rows:
     print("{: >10} {: >25} {: >25} {: >25}".format(*row))
 
-filtered_rows = []
+# filtered_rows = []
 # Filter for only infrequent species
 
 # LIMIT = 1e-3
@@ -179,25 +179,24 @@ filtered_rows = []
 
 # Create plots
 
-ignore = 0
-
+# ignore = 0
 # rows = rows[ignore:]
+
 limit = 0.002
 
 x = [true_pro for (species, true_pro, d_est, u_est) in rows]
 y_diverse = [d_est for (species, true_pro, d_est, u_est) in rows]
 y_uniform = [u_est for (species, true_pro, d_est, u_est) in rows]
-y_true = [true_pro for (species, true_pro, d_est, u_est) in rows]
 
 # plt.yscale("log")
 # plt.xscale("log")
 
-plt.xlim([0, limit])
-plt.ylim([0, limit])
+plt.xlim([rows[-1][1], limit])
+# plt.ylim([0, limit])
 
 plt.plot(x, y_diverse, "-b", label="Diverse Sampling",linestyle="",marker="+")
 plt.plot(x, y_uniform, "-r", label="Uniform Sampling",linestyle="",marker="x")
-plt.plot(x, y_true, color="black", label="Ideal Estimate",linestyle="dashed",marker="")
+plt.plot(x, x, color="black", label="Ideal Estimate",linestyle="dashed",marker="")
 
 plt.legend(loc="upper left")
 
