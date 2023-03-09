@@ -17,14 +17,14 @@ UNCLASSIFIED_SPECIES = -1
 #     pass 
 
 def run_diversity_sampling(fastq_file, sample_size, seed):
-    output_file = f"diverse-sample_seed={seed}_{os.path.basename(fastq_file)}"
+    output_file = f"./outputs/diverse-sample_seed={seed}_{os.path.basename(fastq_file)}"
     t0 = time.time_ns()
     subprocess.call(["./bin/diversesample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed)]) 
     t1 = time.time_ns()
     return (output_file, output_file+".weights", t1 - t0)
 
 def run_uniform_sampling(fastq_file, sample_size, seed):
-    output_file = f"uniform-sample_seed={seed}_{os.path.basename(fastq_file)}"
+    output_file = f"./outputs/uniform-sample_seed={seed}_{os.path.basename(fastq_file)}"
     t0 = time.time_ns()
     subprocess.call(["./bin/uniformsample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed)]) 
     t1 = time.time_ns()
@@ -70,8 +70,6 @@ else:
     kraken_path = args.kraken
     vprint("Kraken file can be located at " + kraken_path)
 
-
-
 # Identify each species form each sequence using kraken
 id_to_species = defaultdict(lambda: UNCLASSIFIED_SPECIES)
 true_proportion = defaultdict(lambda: 0)
@@ -79,7 +77,7 @@ all_diverse_estimates = defaultdict(lambda: list())
 all_uniform_estimates = defaultdict(lambda: list())
 
 # Extract species "true" proportion
-numClassifiedSpecies = 0
+numSequences = 0
 with open(kraken_path) as infile:
     for line in infile:
         # Extract information from kraken line
@@ -92,13 +90,10 @@ with open(kraken_path) as infile:
             species = UNCLASSIFIED_SPECIES
         # Map id to species
         id_to_species[id] = species
-        # Increment species count
-        if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
-            continue
-        numClassifiedSpecies += 1
         true_proportion[species] += 1
+        numSequences += 1
 for species in true_proportion.keys():
-    true_proportion[species] /= numClassifiedSpecies
+    true_proportion[species] /= numSequences
 
 for rep in range(args.repetitions):
     vprint(f"Running repitition #{rep+1}")
@@ -132,40 +127,25 @@ for rep in range(args.repetitions):
             weight = float(line)
             diverse_weights_list.append(weight)
 
-    assert(len(diverse_weights_list) == len(diverse_ids_list))
+    assert(len(diverse_weights_list) == len(diverse_ids_list)) #Sanity check
 
     # Compute uniform estimate
-    uniform_unique_species = set()
     uniform_estimate = defaultdict(lambda: 0)
-    total = 0
+    total_count = 0
     for id in uniform_ids_list:
-        species = id_to_species[id]
-        if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
-            continue
-        uniform_unique_species.add(species)
-        uniform_estimate[species] += 1
-        total += 1
-
+        uniform_estimate[id_to_species[id]] += 1
+        total_count += 1
     for species in uniform_estimate.keys():
-        uniform_estimate[species] /= total
-
-    print(f"Uniform recognized {len(uniform_unique_species)} distinct species!")
+        uniform_estimate[species] /= total_count
 
     # Compute diverse estimate
     diverse_estimate = defaultdict(lambda: 0)
     total_weight = 0
-    diverse_unique_species = set()
     for (id, weight) in zip(diverse_ids_list, diverse_weights_list):
-        species = id_to_species[id]
-        if (species == UNCLASSIFIED_SPECIES): #Skips unclassified species
-            continue
-        diverse_unique_species.add(species)
+        diverse_estimate[id_to_species[id]] += weight
         total_weight += weight
-        diverse_estimate[species] += weight
     for species in diverse_estimate.keys():
         diverse_estimate[species] /= total_weight
-
-    print(f"Diverse recognized {len(diverse_unique_species)} distinct species!")
 
     for species in true_proportion.keys():
         all_diverse_estimates[species].append(diverse_estimate[species])
@@ -174,6 +154,8 @@ for rep in range(args.repetitions):
 # Organize results
 rows = []
 for species in true_proportion.keys():
+    if (species == UNCLASSIFIED_SPECIES):
+        continue #Don't plot the unclassified species
     true_pro = true_proportion[species]
     d_est = statistics.median(all_diverse_estimates[species])
     u_est = statistics.median(all_uniform_estimates[species])
@@ -197,10 +179,10 @@ filtered_rows = []
 
 # Create plots
 
-ignore = 500
+ignore = 0
 
-rows = rows[ignore:]
-limit = rows[0][1]
+# rows = rows[ignore:]
+limit = 0.002
 
 x = [true_pro for (species, true_pro, d_est, u_est) in rows]
 y_diverse = [d_est for (species, true_pro, d_est, u_est) in rows]
