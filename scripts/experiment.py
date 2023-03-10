@@ -18,17 +18,19 @@ UNCLASSIFIED_SPECIES = 0
 
 def run_diversity_sampling(fastq_file, sample_size, seed):
     output_file = f"./outputs/diverse-sample_seed={seed}_{os.path.basename(fastq_file)}"
-    t0 = time.time_ns()
+    if os.path.isfile(output_file):
+        print("Run diversity sampling already ran! Reusing...")
+        return (output_file, output_file+".weights")
     subprocess.call(["./bin/diversesample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed)]) 
-    t1 = time.time_ns()
-    return (output_file, output_file+".weights", t1 - t0)
+    return (output_file, output_file+".weights")
 
 def run_uniform_sampling(fastq_file, sample_size, seed):
     output_file = f"./outputs/uniform-sample_seed={seed}_{os.path.basename(fastq_file)}"
-    t0 = time.time_ns()
+    if os.path.isfile(output_file):
+        print("Run uniform sampling already ran! Reusing...")
+        return (output_file)
     subprocess.call(["./bin/uniformsample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed)]) 
-    t1 = time.time_ns()
-    return (output_file, t1 - t0)
+    return (output_file)
 
 #Parse commandlines
 parser = argparse.ArgumentParser(
@@ -102,13 +104,13 @@ for rep in range(args.repetitions):
 
     #Run the different sampling approaches
     vprint("Running uniform sampling...")
-    (uniform_sample_path, uniform_time_elapsed) = run_uniform_sampling(fastq_path, args.sample_amount, seed)
-    vprint(f" - Uniform sampling took {uniform_time_elapsed} ns")
+    (uniform_sample_path) = run_uniform_sampling(fastq_path, args.sample_amount, seed)
+    # vprint(f" - Uniform sampling took {uniform_time_elapsed} ns")
     vprint(" - Uniform sample file can be located at " + uniform_sample_path)
 
     vprint("Running diversity sampling...")
-    (diverse_sample_path, diverse_weights_path, diverse_time_elapsed) = run_diversity_sampling(fastq_path, args.sample_amount, seed) 
-    vprint(f" - Diversity sampling took {diverse_time_elapsed} ns")
+    (diverse_sample_path, diverse_weights_path) = run_diversity_sampling(fastq_path, args.sample_amount, seed) 
+    # vprint(f" - Diversity sampling took {diverse_time_elapsed} ns")
     vprint(" - Diversity sample file can be located at " + diverse_sample_path)
     vprint(" - Diversity sample Weights file can be located at " + diverse_weights_path)
 
@@ -177,12 +179,12 @@ for row in [("Species", "Proportion", "Diverse Estimate (Median)", "Uniform Esti
 #         filtered_rows.append(row)
 # rows = filtered_rows
 
+rows = rows[500:]
+print(f"Number of rows: {len(rows)}")
+
 # Create plots
 
-# ignore = 0
-# rows = rows[ignore:]
-
-limit = 0.002
+# limit = 0.002
 
 x = [true_pro for (species, true_pro, d_est, u_est) in rows]
 y_diverse = [d_est for (species, true_pro, d_est, u_est) in rows]
@@ -191,7 +193,7 @@ y_uniform = [u_est for (species, true_pro, d_est, u_est) in rows]
 # plt.yscale("log")
 # plt.xscale("log")
 
-plt.xlim([rows[-1][1], limit])
+# plt.xlim([rows[-1][1], limit])
 # plt.ylim([0, limit])
 
 plt.plot(x, y_diverse, "-b", label="Diverse Sampling",linestyle="",marker="+")
