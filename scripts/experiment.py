@@ -152,56 +152,54 @@ for rep in range(args.repetitions):
     for species in true_proportion.keys():
         all_diverse_estimates[species].append(diverse_estimate[species])
         all_uniform_estimates[species].append(uniform_estimate[species])
+    
+    uniform_species_detected = 0
+    diverse_species_detected = 0
+    for species in true_proportion.keys():
+        if uniform_estimate[species] > 0:
+            uniform_species_detected += 1
+        if diverse_estimate[species] > 0:
+            diverse_species_detected += 1 
+    print(f"Uniform species detected: {uniform_species_detected}")    
+    print(f"Diverse species detected: {diverse_species_detected}")    
 
 # Organize results
 rows = []
 for species in true_proportion.keys():
     if (species == UNCLASSIFIED_SPECIES):
-        continue #Don't plot the unclassified species
+        continue # Don't plot the unclassified species
     true_pro = true_proportion[species]
-    d_est = statistics.median(all_diverse_estimates[species])
-    u_est = statistics.median(all_uniform_estimates[species])
+    d_est = statistics.mean(all_diverse_estimates[species])
+    u_est = statistics.mean(all_uniform_estimates[species])
     rows.append((species, true_pro, d_est, u_est))
 
-rows.sort(key=lambda row: row[1], reverse=True)
-
-# Print results to terminal
-for row in [("Species", "Proportion", "Diverse Estimate (Median)", "Uniform Estimate (Median)")] + rows:
-    print("{: >10} {: >25} {: >25} {: >25}".format(*row))
-
+#Filter
 # filtered_rows = []
-# Filter for only infrequent species
-
-# LIMIT = 1e-3
 # for row in rows:
 #     (species, true_pro, d_est, u_est) = row
-#     if true_pro < LIMIT:
+#     if (d_est > 0 and u_est > 0):
 #         filtered_rows.append(row)
 # rows = filtered_rows
+rows = rows[1000:]
 
-rows = rows[500:]
-print(f"Number of rows: {len(rows)}")
+# Print results to terminal
+rows.sort(key=lambda row: row[1], reverse=True)
+for row in [("Species", "Proportion", "Diverse Estimate (Mean)", "Uniform Estimate (Mean)")] + rows:
+    print("{: >10} {: >25} {: >25} {: >25}".format(*row))
 
 # Create plots
-
-# limit = 0.002
-
 x = [true_pro for (species, true_pro, d_est, u_est) in rows]
 y_diverse = [d_est for (species, true_pro, d_est, u_est) in rows]
 y_uniform = [u_est for (species, true_pro, d_est, u_est) in rows]
-
-# plt.yscale("log")
-# plt.xscale("log")
-
-# plt.xlim([rows[-1][1], limit])
-# plt.ylim([0, limit])
 
 plt.plot(x, y_diverse, "-b", label="Diverse Sampling",linestyle="",marker="+")
 plt.plot(x, y_uniform, "-r", label="Uniform Sampling",linestyle="",marker="x")
 plt.plot(x, x, color="black", label="Ideal Estimate",linestyle="dashed",marker="")
 
-plt.legend(loc="upper left")
+# plt.xlim([0, rows[0][1]])
+# plt.ylim([0, rows[0][1]])
 
+plt.legend(loc="upper left")
 plt.xlabel("True Proportion")
 plt.ylabel("Proportion Estimate")
 plt.title('Estimates vs. Species Proportions')
