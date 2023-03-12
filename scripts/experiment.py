@@ -11,6 +11,11 @@ from Bio import SeqIO
 
 UNCLASSIFIED_SPECIES = 0
 
+def stdev(data):
+    if len(data) < 2:
+        return 0
+    return statistics.stdev(data)
+
 # def run_kraken(fastq_file, seed):
 #     # subprocess.call(["kraken2","--db", "/scratch1/zx22/bio/refseq214", "--threads", "12","--output",\
 #     #     src_path+"out_race_"+str(size)+"_repeat_"+str(r), src_path+"race_"+str(size)+"_repeat_"+str(r)+".fastq"]) 
@@ -169,9 +174,7 @@ for species in true_proportion.keys():
     if (species == UNCLASSIFIED_SPECIES):
         continue # Don't plot the unclassified species
     true_pro = true_proportion[species]
-    d_est = statistics.mean(all_diverse_estimates[species])
-    u_est = statistics.mean(all_uniform_estimates[species])
-    rows.append((species, true_pro, d_est, u_est))
+    rows.append((species, true_pro, all_diverse_estimates[species], all_uniform_estimates[species]))
 
 #Filter
 # filtered_rows = []
@@ -180,28 +183,86 @@ for species in true_proportion.keys():
 #     if (d_est > 0 and u_est > 0):
 #         filtered_rows.append(row)
 # rows = filtered_rows
-rows = rows[1000:]
 
 # Print results to terminal
 rows.sort(key=lambda row: row[1], reverse=True)
-for row in [("Species", "Proportion", "Diverse Estimate (Mean)", "Uniform Estimate (Mean)")] + rows:
-    print("{: >10} {: >25} {: >25} {: >25}".format(*row))
+
+rows = rows[100:]
+
+# for row in [("Species", "Proportion", "Diverse Estimate (Mean)", "Uniform Estimate (Mean)")] + rows:
+#     print("{: >10} {: >25} {: >25} {: >25}".format(*row))
+
+err_uniform = defaultdict(lambda: list())
+err_diverse = defaultdict(lambda: list())
+est_uniform = defaultdict(lambda: list())
+est_diverse = defaultdict(lambda: list())
+x = set()
+for (species, true_pro, d, u) in rows:
+    x.add(true_pro)
+    err_diverse[true_pro] += [abs(d_est - true_pro) for d_est in d]
+    err_uniform[true_pro] += [abs(u_est - true_pro) for u_est in u]
+    est_uniform[true_pro] += u
+    est_diverse[true_pro] += d
+x = list(x)
+x.sort()
 
 # Create plots
-x = [true_pro for (species, true_pro, d_est, u_est) in rows]
-y_diverse = [d_est for (species, true_pro, d_est, u_est) in rows]
-y_uniform = [u_est for (species, true_pro, d_est, u_est) in rows]
+plt.title('Error vs. Species Proportions')
+plt.xlabel("True Proportion")
+plt.ylabel("Mean Estimate Error (abs)")
 
-plt.plot(x, y_diverse, "-b", label="Diverse Sampling",linestyle="",marker="+")
-plt.plot(x, y_uniform, "-r", label="Uniform Sampling",linestyle="",marker="x")
-plt.plot(x, x, color="black", label="Ideal Estimate",linestyle="dashed",marker="")
+plt.errorbar(x, 
+    [statistics.median(err_uniform[t]) for t in x],
+    yerr=[stdev(err_uniform[t]) for t in x],
+    capsize= 3,
+    color="red", 
+    label="Uniform Sampling",
+    linestyle="", 
+    marker="."
+)
 
-# plt.xlim([0, rows[0][1]])
-# plt.ylim([0, rows[0][1]])
+plt.errorbar(x, 
+    [statistics.median(err_diverse[t]) for t in x],
+    yerr=[stdev(err_diverse[t]) for t in x],
+    capsize= 3,
+    color="blue", 
+    label="Diverse Sampling",
+    linestyle="", 
+    marker="."
+)
 
 plt.legend(loc="upper left")
+plt.savefig("error-plot.png")
+plt.clf()
+
+# Plot
+plt.title('Estimate vs. Species Proportions')
 plt.xlabel("True Proportion")
-plt.ylabel("Proportion Estimate")
-plt.title('Estimates vs. Species Proportions')
-plt.savefig("plot.png")
+plt.ylabel("Mean Estimate")
+
+plt.errorbar(x, 
+    [statistics.median(est_uniform[t]) for t in x],
+    yerr=[stdev(est_uniform[t]) for t in x],
+    capsize= 3,
+    color="red", 
+    label="Uniform Sampling",
+    linestyle="", 
+    marker="."
+)
+
+plt.errorbar(x, 
+    [statistics.median(est_diverse[t]) for t in x],
+    yerr=[stdev(est_diverse[t]) for t in x],
+    capsize= 3,
+    color="blue", 
+    label="Diverse Sampling",
+    linestyle="", 
+    marker="."
+)
+
+plt.legend(loc="upper left")
+plt.plot(x, x, color="black", label="Ideal Estimate",linestyle="dashed",marker="")
+
+plt.savefig("estimate-plot.png")
+
 
