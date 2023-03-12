@@ -4,6 +4,8 @@ import argparse
 import random
 import time 
 import statistics
+import numpy as np
+from numpy.polynomial.polynomial import polyfit
 
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -196,6 +198,10 @@ err_uniform = defaultdict(lambda: list())
 err_diverse = defaultdict(lambda: list())
 est_uniform = defaultdict(lambda: list())
 est_diverse = defaultdict(lambda: list())
+
+# det_uniform = defaultdict(lambda: list())
+# det_diverse = defaultdict(lambda: list())
+# num_species = defaultdict(lambda: 0)
 x = set()
 for (species, true_pro, d, u) in rows:
     x.add(true_pro)
@@ -203,6 +209,16 @@ for (species, true_pro, d, u) in rows:
     err_uniform[true_pro] += [abs(u_est - true_pro) for u_est in u]
     est_uniform[true_pro] += u
     est_diverse[true_pro] += d
+
+    # num_species[true_pro] += 1
+    # d_delta = 0
+    # if (sum(d) > 0):
+    #     d_delta = 1
+    # u_delta = 0
+    # if (sum(u) > 0):
+    #     u_delta = 1
+    # species_detected[true_pro] = (count + 1, d_detected + d_delta, u_detected + u_delta)
+
 x = list(x)
 x.sort()
 
@@ -212,20 +228,20 @@ plt.xlabel("True Proportion")
 plt.ylabel("Mean Estimate Error (abs)")
 
 plt.errorbar(x, 
-    [statistics.median(err_uniform[t]) for t in x],
+    [statistics.mean(err_uniform[t]) for t in x],
     yerr=[stdev(err_uniform[t]) for t in x],
     capsize= 3,
-    color="red", 
+    color="tab:pink", 
     label="Uniform Sampling",
     linestyle="", 
     marker="."
 )
 
 plt.errorbar(x, 
-    [statistics.median(err_diverse[t]) for t in x],
+    [statistics.mean(err_diverse[t]) for t in x],
     yerr=[stdev(err_diverse[t]) for t in x],
     capsize= 3,
-    color="blue", 
+    color="tab:cyan", 
     label="Diverse Sampling",
     linestyle="", 
     marker="."
@@ -241,7 +257,7 @@ plt.xlabel("True Proportion")
 plt.ylabel("Mean Estimate")
 
 plt.errorbar(x, 
-    [statistics.median(est_uniform[t]) for t in x],
+    [statistics.mean(est_uniform[t]) for t in x],
     yerr=[stdev(est_uniform[t]) for t in x],
     capsize= 3,
     color="red", 
@@ -250,8 +266,11 @@ plt.errorbar(x,
     marker="."
 )
 
+b, m = polyfit(x, [statistics.mean(est_uniform[t]) for t in x], 1)
+plt.plot(x, [b + m * t for t in x ], '-', color="red", label=f"Uniform fit: {m}x + {b}")
+
 plt.errorbar(x, 
-    [statistics.median(est_diverse[t]) for t in x],
+    [statistics.mean(est_diverse[t]) for t in x],
     yerr=[stdev(est_diverse[t]) for t in x],
     capsize= 3,
     color="blue", 
@@ -260,9 +279,46 @@ plt.errorbar(x,
     marker="."
 )
 
+b, m = polyfit(x, [statistics.mean(est_diverse[t]) for t in x], 1)
+plt.plot(x, [b + m * t for t in x ], '-', color="blue", label=f"Diverse fit: {m}x + {b}")
+
 plt.legend(loc="upper left")
 plt.plot(x, x, color="black", label="Ideal Estimate",linestyle="dashed",marker="")
 
 plt.savefig("estimate-plot.png")
+# plt.clf()
+
+# plt.title('Species Detected')
+# plt.xlabel("True Proportion")
+# plt.ylabel("Number of Speceis Detected")
+
+# plt.plot(x,
+#     [species_detected[t][0] for t in x],
+#     color="gray",
+#     label="Species Count",
+#     linestyle="", 
+#     marker="o"
+# )
+
+# plt.plot(x,
+#     [species_detected[t][2] for t in x],
+#     color="red",
+#     label="Uniform Sampling",
+#     linestyle="", 
+#     marker="x"
+# )
+
+# plt.plot(x,
+#     [species_detected[t][1] for t in x],
+#     color="blue",
+#     label="Diverse Sampling",
+#     linestyle="", 
+#     marker="+"
+# )
+
+# plt.legend(loc="upper right")
+# plt.yscale("log")
+# plt.savefig("detection-plot.png")
+
 
 

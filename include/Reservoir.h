@@ -12,15 +12,17 @@
 
 struct Node {
     public:
-        Node(std::string s, long double k, long double w) {
+        Node(std::string s, long double c, long double w, long double k) {
             str = s;
-            score = k;
+            score = c;
             weight = w;
+            kde = k;
         }
 
         std::string str;
         long double score;
         long double weight;
+        long double kde;
 };
 
 struct Comp{
@@ -36,7 +38,7 @@ public:
     Reservoir(size_t desired_sample_size); 
     ~Reservoir(); 
 
-    void put(std::string element, long double weight); 
+    void put(std::string element, long double weight, long double kde); 
 
     void drain(std::ofstream& sample_stream, std::ofstream& weight_stream); 
     
