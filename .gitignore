@@ -58,3 +58,7 @@ build/*
 
 # Filesystems 
 .DS_Store
+.vscode/
+
+# Python virtual env
+env/

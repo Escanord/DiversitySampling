@@ -1,0 +1,61 @@
+NOTE: Because NCBI taxonomy does change from time to time, we do not
+provide the true taxonomic ID numbers here.  But, we do provide instructions
+on how to obtain those values relatively painlessly.
+
+===
+
+To obtain the correct taxonomic information for the reads in the
+HiSeq and MiSeq simulated metagenomic samples, you'll want to visit
+the NCBI Taxonomy website:
+
+  http://www.ncbi.nlm.nih.gov/taxonomy
+
+On that site, you can enter in the name of a strain or species (e.g.,
+"Bacillus cereus" or "Bacillus cereus VD118") or any other taxonomic entry.
+For each of the 20 genomes, you'll need to look them up individually,
+at the rank you're interested in.  In some cases, the specific strain used
+may not have a taxonomic entry, and you'll only be able to use the
+species-level taxonomic ID.
+
+The names associated with the strains of the 20 genomes are:
+
+HiSeq:
+  - Aeromonas hydrophila SSU
+  - Bacillus cereus VD118
+  - Bacteroides fragilis HMW615
+  - Mycobacterium abscessus 6G-0125-R
+  - Pelosinus fermentans A11
+  - Rhodobacter sphaeroides 2.4.1
+  - Staphylococcus aureus M0927
+  - Streptococcus pneumoniae TIGR4
+  - Vibrio cholerae CP1032(5)
+  - Xanthomonas axonopodis pv. Manihotis UA323
+
+MiSeq:
+  - Bacillus cereus VD118
+  - Citrobacter freundii 47N
+  - Enterobacter cloacae
+  - Klebsiella pneumoniae NES14
+  - Mycobacterium abscessus 6G-0125-R
+  - Proteus vulgaris 66N
+  - Rhodobacter sphaeroides 2.4.1
+  - Staphylococcus aureus ST22
+  - Salmonella enterica Montevideo str. N19965
+  - Vibrio cholerae CP1032(5)
+
+===
+
+For the simBA-5 metagenome, the simulated reads all have their source GI
+number associated with them on the FASTA header line.  Using this file:
+
+  ftp://ftp.ncbi.nih.gov/pub/taxonomy/gi_taxid_nucl.dmp.gz
+
+you can map those GI numbers to their respective taxa.  Note that this
+file is over 4 GB in size, and is downloaded as part of a standard Kraken
+database build (and should be available in $DBNAME/taxonomy/ once the build
+is complete), so you don't need to download it again if you've built a
+standard database.
+
+A mapping of read IDs to GI numbers can be obtained by:
+
+  perl -nle '/^>(\S+) contig=gi\|(\d+)/ and print "$1 $2"' simBA5_accuracy.fa
