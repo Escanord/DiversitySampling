@@ -62,3 +62,6 @@ build/*
 
 # Python virtual env
 env/
+
+#data folder
+accuracy/

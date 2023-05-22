@@ -232,7 +232,7 @@ int main(int argc, char **argv)
         std::cerr << "Invalid value for optional parameter --reps" << std::endl;
         return -1;
     }
-    // n
+    //
     if (hash_power <= 0)
     {
         std::cerr << "Invalid value for optional parameter --hashes" << std::endl;
