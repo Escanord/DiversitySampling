@@ -10,6 +10,7 @@ from numpy.polynomial.polynomial import polyfit
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from Bio import SeqIO
+from Bio.SeqIO import FastaIO
 
 UNCLASSIFIED_SPECIES = 0
 
@@ -28,7 +29,7 @@ def run_diversity_sampling(fastq_file, sample_size, seed):
     if os.path.isfile(output_file):
         print("Run diversity sampling already ran! Reusing...")
         return (output_file, output_file+".weights")
-    subprocess.call(["./bin/diversesample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed)]) 
+    subprocess.call(["./bin/diversesample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed), '-range', str(15137), '--k', str(39), '--reps', str(23)]) 
     return (output_file, output_file+".weights")
 
 def run_uniform_sampling(fastq_file, sample_size, seed):
@@ -47,11 +48,10 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('-f', '--fastq', help="fastq file pre sampling")
 
-parser.add_argument('-a', '--sample_amount', help="post sampling fastq file", default=10000, type=int)  
+parser.add_argument('-a', '--sample_amount', help="post sampling fastq file", default=10, type=int)  
 parser.add_argument('-s', '--seed', help="seed to use", default=random.randint(0, 1 << 31), type=int)
 parser.add_argument('-r', '--repetitions', help="number of times to repeat experiment", default=1, type=int)
 
-parser.add_argument('-k', '--kraken', help="(Optional) kraken of original fastq file")
 parser.add_argument('-v', '--verbose', action='store_true')  # on/off flag
 
 args = parser.parse_args()
@@ -66,43 +66,50 @@ vprint("Using sourceseed", args.seed)
 random.seed(args.seed)
 seeds = [random.randint(0, 1 << 31) for _ in range(args.repetitions)]
 
-# Extract files
-fastq_path = args.fastq
-kraken_path = None
-
-if (args.kraken == None):
-    vprint("Running kraken...")
-    # TODO: Execute kraken when needed.
-    raise Exception("kraken execution not implemented")
-    # kraken_file = run_kraken(fastq_file)
-else:
-    kraken_path = args.kraken
-    vprint("Kraken file can be located at " + kraken_path)
-
 # Identify each species form each sequence using kraken
 id_to_species = defaultdict(lambda: UNCLASSIFIED_SPECIES)
 true_proportion = defaultdict(lambda: 0)
 all_diverse_estimates = defaultdict(lambda: list())
 all_uniform_estimates = defaultdict(lambda: list())
 
+fastq_path = args.fastq
 # Extract species "true" proportion
-numSequences = 0
-with open(kraken_path) as infile:
-    for line in infile:
-        # Extract information from kraken line
-        chunks = line.split('\t')
-        classified = (chunks[0].strip() == 'C')  
-        id = chunks[1]
-        if classified and chunks[2] != None:
-            species = int(chunks[2])
+def get_records(dir):
+    records = list(SeqIO.parse(dir, "fasta"))
+    return records
+
+def diversify_shuffle(dir):
+    records = get_records(dir)
+    random.shuffle(records)
+    species = records[0].id.split('.')[0]
+    new_records = []
+    
+    for record in records:
+        if record.id.split('.')[0] == species:
+                new_records.append(record)
         else:
-            species = UNCLASSIFIED_SPECIES
-        # Map id to species
-        id_to_species[id] = species
-        true_proportion[species] += 1
-        numSequences += 1
+            flag = random.randint(1, 10)
+            if flag == 1:
+                    new_records.append(record)
+    random.shuffle(new_records)
+
+    with open("accuracy/HiSeq_diversified_oneline.fasta", "w") as output_handle:
+        fasta_writer = FastaIO.FastaWriter(output_handle, wrap=None)
+        fasta_writer.write_file(new_records)
+        
+# diversify_shuffle("accuracy/HiSeq_oneline.fasta")
+records = get_records("accuracy/HiSeq_rare_diversified_oneline.fasta")
+numSequences = 0
+for record in records:
+    id = species = record.id.split('.')[0]
+    # Map id to species
+    id_to_species[id] = species
+    true_proportion[species] += 1
+    numSequences += 1
 for species in true_proportion.keys():
+    print(species + f' has {true_proportion[species]} sequences in the dataset')
     true_proportion[species] /= numSequences
+    
 
 for rep in range(args.repetitions):
     vprint(f"Running repitition #{rep+1}")
@@ -124,12 +131,14 @@ for rep in range(args.repetitions):
     # Extract ids from samples 
     uniform_ids_list = list()
     with open(uniform_sample_path) as handle:
-        for record in SeqIO.parse(handle, "fastq"):
-            uniform_ids_list.append(record.id)
+        for record in SeqIO.parse(handle, "fasta"):
+            id = record.id.split('.')[0]
+            uniform_ids_list.append(id)
     diverse_ids_list = list()
     with open(diverse_sample_path) as handle:
-        for record in SeqIO.parse(handle, "fastq"):
-            diverse_ids_list.append(record.id)
+        for record in SeqIO.parse(handle, "fasta"):
+            id = record.id.split('.')[0]
+            diverse_ids_list.append(id)
     diverse_weights_list = list() 
     with open(diverse_weights_path) as infile:
         for line in infile:
@@ -160,6 +169,10 @@ for rep in range(args.repetitions):
         all_diverse_estimates[species].append(diverse_estimate[species])
         all_uniform_estimates[species].append(uniform_estimate[species])
     
+    # print(all_diverse_estimates)
+    # print(all_uniform_estimates)
+    # print(true_proportion)
+    
     uniform_species_detected = 0
     diverse_species_detected = 0
     for species in true_proportion.keys():
@@ -167,8 +180,8 @@ for rep in range(args.repetitions):
             uniform_species_detected += 1
         if diverse_estimate[species] > 0:
             diverse_species_detected += 1 
-    print(f"Uniform species detected: {uniform_species_detected}")    
-    print(f"Diverse species detected: {diverse_species_detected}")    
+    # print(f"Uniform species detected: {uniform_species_detected}")    
+    # print(f"Diverse species detected: {diverse_species_detected}")    
 
 # Organize results
 rows = []
@@ -189,7 +202,7 @@ for species in true_proportion.keys():
 # Print results to terminal
 rows.sort(key=lambda row: row[1], reverse=True)
 
-rows = rows[100:]
+# rows = rows[100:]
 
 # for row in [("Species", "Proportion", "Diverse Estimate (Mean)", "Uniform Estimate (Mean)")] + rows:
 #     print("{: >10} {: >25} {: >25} {: >25}".format(*row))
@@ -204,11 +217,11 @@ est_diverse = defaultdict(lambda: list())
 # num_species = defaultdict(lambda: 0)
 x = set()
 for (species, true_pro, d, u) in rows:
-    x.add(true_pro)
-    err_diverse[true_pro] += [abs(d_est - true_pro) for d_est in d]
-    err_uniform[true_pro] += [abs(u_est - true_pro) for u_est in u]
-    est_uniform[true_pro] += u
-    est_diverse[true_pro] += d
+    x.add(species)
+    err_diverse[species] += [abs(d_est - true_pro) for d_est in d]
+    err_uniform[species] += [abs(u_est - true_pro) for u_est in u]
+    est_uniform[species] += u
+    est_diverse[species] += d
 
     # num_species[true_pro] += 1
     # d_delta = 0
@@ -226,8 +239,12 @@ x.sort()
 plt.title('Error vs. Species Proportions')
 plt.xlabel("True Proportion")
 plt.ylabel("Mean Estimate Error (abs)")
+plt.subplots_adjust(bottom=0.3)
 
-plt.errorbar(x, 
+#set parameters for tick labels
+plt.tick_params(axis='x', which='major', rotation = 90)
+
+plt.errorbar([s.split('_')[1] for s in x], 
     [statistics.mean(err_uniform[t]) for t in x],
     yerr=[stdev(err_uniform[t]) for t in x],
     capsize= 3,
@@ -237,7 +254,7 @@ plt.errorbar(x,
     marker="."
 )
 
-plt.errorbar(x, 
+plt.errorbar([s.split('_')[1] for s in x], 
     [statistics.mean(err_diverse[t]) for t in x],
     yerr=[stdev(err_diverse[t]) for t in x],
     capsize= 3,
@@ -266,26 +283,26 @@ plt.errorbar(x,
     marker="."
 )
 
-b, m = polyfit(x, [statistics.mean(est_uniform[t]) for t in x], 1)
-plt.plot(x, [b + m * t for t in x ], '-', color="red", label=f"Uniform fit: {m}x + {b}")
+# b, m = polyfit(x, [statistics.mean(est_uniform[t]) for t in x], 1)
+# plt.plot(x, [b + m * t for t in x ], '-', color="red", label=f"Uniform fit: {m}x + {b}")
 
-plt.errorbar(x, 
-    [statistics.mean(est_diverse[t]) for t in x],
-    yerr=[stdev(est_diverse[t]) for t in x],
-    capsize= 3,
-    color="blue", 
-    label="Diverse Sampling",
-    linestyle="", 
-    marker="."
-)
+# plt.errorbar(x, 
+#     [statistics.mean(est_diverse[t]) for t in x],
+#     yerr=[stdev(est_diverse[t]) for t in x],
+#     capsize= 3,
+#     color="blue", 
+#     label="Diverse Sampling",
+#     linestyle="", 
+#     marker="."
+# )
 
-b, m = polyfit(x, [statistics.mean(est_diverse[t]) for t in x], 1)
-plt.plot(x, [b + m * t for t in x ], '-', color="blue", label=f"Diverse fit: {m}x + {b}")
+# b, m = polyfit(x, [statistics.mean(est_diverse[t]) for t in x], 1)
+# plt.plot(x, [b + m * t for t in x ], '-', color="blue", label=f"Diverse fit: {m}x + {b}")
 
-plt.legend(loc="upper left")
-plt.plot(x, x, color="black", label="Ideal Estimate",linestyle="dashed",marker="")
+# plt.legend(loc="upper left")
+# plt.plot(x, x, color="black", label="Ideal Estimate",linestyle="dashed",marker="")
 
-plt.savefig("estimate-plot.png")
+# plt.savefig("estimate-plot.png")
 # plt.clf()
 
 # plt.title('Species Detected')
@@ -319,6 +336,3 @@ plt.savefig("estimate-plot.png")
 # plt.legend(loc="upper right")
 # plt.yscale("log")
 # plt.savefig("detection-plot.png")
-
-
-

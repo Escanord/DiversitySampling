@@ -65,3 +65,4 @@ env/
 
 #data folder
 accuracy/
+outputs/
