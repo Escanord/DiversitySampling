@@ -48,7 +48,7 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('-f', '--fastq', help="fastq file pre sampling")
 
-parser.add_argument('-a', '--sample_amount', help="post sampling fastq file", default=10, type=int)  
+parser.add_argument('-a', '--sample_amount', help="post sampling fastq file", default=40, type=int)  
 parser.add_argument('-s', '--seed', help="seed to use", default=random.randint(0, 1 << 31), type=int)
 parser.add_argument('-r', '--repetitions', help="number of times to repeat experiment", default=1, type=int)
 
@@ -71,6 +71,8 @@ id_to_species = defaultdict(lambda: UNCLASSIFIED_SPECIES)
 true_proportion = defaultdict(lambda: 0)
 all_diverse_estimates = defaultdict(lambda: list())
 all_uniform_estimates = defaultdict(lambda: list())
+diverse_zeroes_prediction = defaultdict(lambda: 0)
+uniform_zeroes_prediction = defaultdict(lambda: 0)
 
 fastq_path = args.fastq
 # Extract species "true" proportion
@@ -167,7 +169,11 @@ for rep in range(args.repetitions):
 
     for species in true_proportion.keys():
         all_diverse_estimates[species].append(diverse_estimate[species])
+        if diverse_estimate[species] == 0:
+            diverse_zeroes_prediction[species] += 1
         all_uniform_estimates[species].append(uniform_estimate[species])
+        if uniform_estimate[species] == 0:
+            uniform_zeroes_prediction[species] += 1
     
     # print(all_diverse_estimates)
     # print(all_uniform_estimates)
@@ -189,6 +195,8 @@ for species in true_proportion.keys():
     if (species == UNCLASSIFIED_SPECIES):
         continue # Don't plot the unclassified species
     true_pro = true_proportion[species]
+    uniform_zeroes_prediction[species] /= args.repetitions
+    diverse_zeroes_prediction[species] /= args.repetitions
     rows.append((species, true_pro, all_diverse_estimates[species], all_uniform_estimates[species]))
 
 #Filter
@@ -236,15 +244,36 @@ x = list(x)
 x.sort()
 
 # Create plots
+fig, ax1 = plt.subplots()
+
+ax2 = ax1.twinx()
+
 plt.title('Error vs. Species Proportions')
-plt.xlabel("True Proportion")
-plt.ylabel("Mean Estimate Error (abs)")
+ax1.set_xlabel("True Proportion")
+ax1.set_ylabel("Mean Estimate Error (abs)")
+ax2.set_ylabel("Zeroes prediction error")
 plt.subplots_adjust(bottom=0.3)
 
-#set parameters for tick labels
-plt.tick_params(axis='x', which='major', rotation = 90)
+zeroes_plot = ax2.errorbar([s.split('_')[1] for s in x], 
+                           [proportion for _,proportion in uniform_zeroes_prediction.items()], 
+                           color='tab:pink',
+                           linestyle="None",
+                           marker='s',
+                           markeredgecolor='tab:pink',
+                           markerfacecolor='None')
 
-plt.errorbar([s.split('_')[1] for s in x], 
+zeroes_plot = ax2.errorbar([s.split('_')[1] for s in x], 
+                           [proportion for _,proportion in diverse_zeroes_prediction.items()], 
+                           color='tab:cyan',
+                           linestyle="None",
+                           marker='s',
+                           markeredgecolor='tab:cyan',
+                           markerfacecolor='None')
+
+#set parameters for tick labels
+ax1.tick_params(axis='x', which='major', rotation = 90)
+
+ax1.errorbar([s.split('_')[1] for s in x], 
     [statistics.mean(err_uniform[t]) for t in x],
     yerr=[stdev(err_uniform[t]) for t in x],
     capsize= 3,
@@ -254,7 +283,7 @@ plt.errorbar([s.split('_')[1] for s in x],
     marker="."
 )
 
-plt.errorbar([s.split('_')[1] for s in x], 
+ax1.errorbar([s.split('_')[1] for s in x], 
     [statistics.mean(err_diverse[t]) for t in x],
     yerr=[stdev(err_diverse[t]) for t in x],
     capsize= 3,
@@ -264,7 +293,7 @@ plt.errorbar([s.split('_')[1] for s in x],
     marker="."
 )
 
-plt.legend(loc="upper left")
+ax1.legend(loc="upper left")
 plt.savefig("error-plot.png")
 plt.clf()
 

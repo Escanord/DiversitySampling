@@ -32,7 +32,6 @@ We use MinHash as the LSH function. MinHash takes two parameters - the length of
 
 There are a couple of hyperparameters that you may want to change: 
 
-- tau: This is the threshold for whether we should keep a new sequence or not. Increasing tau means that we will keep more sequences. Typical values for tau are between 0.1 and 100.0, depending on the size of the sample you wish to retain.
 - range: This is the width (B) of the RACE array. If there are many categories or organisms that you want to sample from, increasing range might help you get more diverse results. Increasing the range is essentially free, but keeping it below 10000 may lead to faster processing times. 
 - reps: This is the depth (R) of the RACE array. Increasing the reps will directly increase the time needed to process each input sequence, but you will be much less likely to accidentally discard a rare sequence. Typical values for reps are between 10 and 1000. 
 - hashes: This is the number (n) of LSH functions we use for each row of the RACE array. Increasing this will directly increase the processing time but may also let you differentiate between sequences that are closer together in terms of edit distance. We recommend using only 1 hash. 
@@ -43,15 +42,17 @@ If it seems like RACE isn't returning very good samples, try increasing k and in
 
 ## How to run
 
-Once you have the binaries compiled, you can run the algorithm on a test fastq file included with this repository by running 
+Once you have the binaries compiled, there are two sampling methods that you can run in the /bin folder:
+
+- bin/diversesample: executable file of RACE algorithm
+
+- bin/uniformsample: executable file of general uniform sampling method
+
+RACE will only require about 20 KB of RAM (in constrast to the > 10 GB needed by other diversity sampling methods such as Diginorm, coresets and buffer-based methods) and it can process about 2.5 Mbp/s on a 2016 MacBook.
 ```
-bin/samplerace 0.1 SE data/SRR1056036.fastq data/output.fastq
-```
-RACE will only require about 20 KB of RAM (in constrast to the > 10 GB needed by other diversity sampling methods such as Diginorm, coresets and buffer-based methods) and it can process about 2.5 Mbp/s on a 2016 MacBook. To start, try tau = 1.0 and use the default parameter settings - they usually work pretty well. 
-```
-samplerace <tau> <format> <input> <output> [--range race_range] [--reps race_reps] [--hashes n_minhashes] [-k kmer_size]
+diversesample <sample size> <format> <input> <output> [--range race_range] [--reps race_reps] [--hashes n_minhashes] [-k kmer_size]
 Positional arguments: 
-tau: floating point RACE sampling threshold. Roughly determines how many samples you will store. You may specify this in scientific notation (i.e. 10e-6)
+sample size: size of the sample to be taken from the population
 format: Either PE, SE, or I for paired-end, single-end, and interleaved paired reads
 input: path to input data file (.fastq or .fasta extension). For PE format, specify two files.
 output: path to output sample file (same extension as input). For PE format, specify two files.
@@ -62,9 +63,9 @@ Optional arguments:
 [--k kmer_size]: (Optional, default 16) Size of each MinHash k-mer (k)
 
 Example usage:
-samplerace 15.0 PE data/input-1.fastq data/input-2.fastq data/output-1.fastq data/output-2.fastq --range 100 --reps 50 --hashes 3 --k 5
-samplerace 10e-6 SE data/input.fastq data/output.fastq --range 100 --reps 5 --hashes 1 --k 33
-samplerace 0.1 SE data/input.fasta data/output.fasta --range 100000 --k 20
+diversesample 200 PE data/input-1.fastq data/input-2.fastq data/output-1.fastq data/output-2.fastq --range 100 --reps 50 --hashes 3 --k 5
+diversesample 100 SE data/input.fastq data/output.fastq --range 100 --reps 5 --hashes 1 --k 33
+diversesample 333 SE data/input.fasta data/output.fasta --range 100000 --k 20
 ```
 
 We support fasta and fastq formats. For fastq files, the RACE tool supports single-end, paired-end and interleaved paired reads. RACE will decide how to parse your files based on the file extension, so be sure to input files with either the .fastq or .fasta extension. 
@@ -79,6 +80,48 @@ Process paired-end read files using the "PE" flag. In this case, RACE needs two 
 
 ### Interleaved Reads
 If your reads are interleaved (i.e. the file alternately lists the forward and backward reads), then you can specify the "I" flag. RACE will decide whether to keep each pair of sequences based on the the first sequence. You only need to specify one input file and one output file. 
+
+## Experiment & Plotting
+There are two types of experiments that are implemented and you can run directly to obtain experimental plots.
+
+
+
+### Number of Discovered Species vs. Sample Size
+Experiment execution file is experiments/Diverse_Sampling_Exp.py. By executing the script, you will obtain a plot of the mean number of discovered species against the sample size.
+
+** Note: ** To successfully execute the scripts, you have to create a Python virtual environment, or equivalent form, with required packages defined in 'requirements.txt'.
+
+```
+python experiment.py <input_file> <output_file> [max_sample_size] [repetitions]
+Positional arguments: 
+input_file: input file to sample from
+output_file: output file to write the sample to
+Optional arguments: 
+[--max_sample_size]: the maximum size of the sample
+[--repetitions]: number of times collecting sample from the population 
+
+Example usage:
+python experiments/Diverse_Sampling_Exp.py -i accuracy/Hiseq_oneline.fasta -o accuracy/HiSeq_out.fasta
+
+python experiments/Diverse_Sampling_Exp.py -i accuracy/Hiseq_oneline.fasta -o accuracy/HiSeq_out.fasta -m 5 -r 5
+```
+
+
+### Mean Estimate Error vs. Species
+Experiment execution file is script/experiment.py. By executing the script, you will obtain a plot of mean estimate error of each species' estimation against the entire population in the input file.
+
+```
+python experiment.py <fastq> [sample_amount] [seed] [repetitions]
+Positional arguments: 
+fastq: input file to sample from
+Optional arguments: 
+[--sample_amount]: the size of the sample
+[--seed]: seed to be used in the sampling methods
+[--repetitions]: number of times collecting sample from the population 
+
+Example usage:
+python scripts/experiment.py --fastq ./accuracy/HiSeq_rare_diversified_oneline.fasta --repetitions 50
+```
 
 ## Contact 
 For questions about installing or using this software, fill out an issue on GitHub and we'll do our best to help. For questions about the RACE algorithm, contact Benjamin Coleman at Rice University. If you use this software, please cite our paper. RACE is released under the MIT License. 

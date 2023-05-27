@@ -2,6 +2,7 @@ from Bio import SeqIO
 from Bio.SeqIO import FastaIO
 import random
 import numpy as np
+import argparse
 import os
 import matplotlib.pyplot as plt
 
@@ -85,9 +86,9 @@ def box_plot_sample(num_samples, uniform, race):
     plt.title('Race Sampling')
     plt.show(block=True)
 
-def main():
-    random_shuffle("accuracy/HiSeq_oneline.fasta")
-    records = get_records("accuracy/HiSeq_oneline.fasta")
+def main(input_file, output_file, max_sample_size, repetitions):
+    random_shuffle(input_file)
+    records = get_records(input_file)
     uniform_samples = []
     race_samples = []
     uniform_errors = [[],[]]
@@ -95,14 +96,14 @@ def main():
     box_uniform = []
     box_race = []
 
-    for i in range(1, 51):
+    for i in range(1, max_sample_size + 1):
         uniform_ave = 0
         uniform_min = race_min = i + 1
         uniform_max = race_max = 0
         race_ave = 0
         box_uniform.append([])
         box_race.append([])
-        for j in range(20):
+        for j in range(repetitions):
             distinct = uniform_sampling(records, i)
             uniform_ave = uniform_ave + distinct
             uniform_min = min(uniform_min, distinct)
@@ -110,26 +111,41 @@ def main():
             box_uniform[i - 1].append(distinct)
             
             distinct = race_sampling(
-                "./accuracy/HiSeq_oneline.fasta", "./accuracy/HiSeq_out.fasta", i
+                input_file, output_file, i
             )
             race_ave = race_ave + distinct
             race_min = min(race_min, distinct)
             race_max = max(race_max, distinct)
             box_race[i - 1].append(distinct)
         
-        uniform_samples.append(round(uniform_ave / 20, 3))
-        race_samples.append(round(race_ave / 20, 3))
+        uniform_samples.append(round(uniform_ave / repetitions, 3))
+        race_samples.append(round(race_ave / repetitions, 3))
         uniform_errors[0].append(uniform_min)
         uniform_errors[1].append(uniform_max)
         race_errors[0].append(race_min)
         race_errors[1].append(race_max)
 
-    print(uniform_samples)
-    print(race_samples)
+    # print(uniform_samples)
+    # print(race_samples)
 
-    plot_sample(50, uniform_samples, race_samples, uniform_errors, race_errors)
+    plot_sample(max_sample_size, uniform_samples, race_samples, uniform_errors, race_errors)
     # box_plot_sample(30, box_uniform, box_race)
 
 
+
 if __name__ == "__main__":
-    main()
+    #Parse commandlines
+    parser = argparse.ArgumentParser(
+                        prog = 'RunExperiment',
+                        description = 'What the program does',
+                        epilog = '')
+
+    parser.add_argument('-i', '--input_file', help="fastq file pre sampling")
+
+    parser.add_argument('-o', '--output_file', help="post sampling fastq file")  
+    parser.add_argument('-m', '--max_sample_size', help="maximum sample size", default=50, type=int)
+    parser.add_argument('-r', '--repetitions', help="number of times to repeat experiment for each sample size", default=20, type=int)
+
+    args = parser.parse_args()
+
+    main(args.input_file, args.output_file, args.max_sample_size, args.repetitions)
