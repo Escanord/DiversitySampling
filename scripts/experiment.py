@@ -29,7 +29,7 @@ def run_diversity_sampling(fastq_file, sample_size, seed):
     if os.path.isfile(output_file):
         print("Run diversity sampling already ran! Reusing...")
         return (output_file, output_file+".weights")
-    subprocess.call(["./bin/diversesample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed), '-range', str(15137), '--k', str(39), '--reps', str(23)]) 
+    subprocess.call(["./bin/diversesample", str(sample_size), "SE", fastq_file, output_file, "--seed", str(seed), '--range', str(29311), '--k', str(39), '--reps', str(37)]) 
     return (output_file, output_file+".weights")
 
 def run_uniform_sampling(fastq_file, sample_size, seed):

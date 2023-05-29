@@ -45,7 +45,7 @@ def uniform_sampling(records, k):
 
 
 def race_sampling(in_dir, out_dir, k):
-    cmd = f"./bin/diversesample {k} SE {in_dir} {out_dir} -range 15137 --k 39 --reps 23"
+    cmd = f"./bin/diversesample {k} SE {in_dir} {out_dir} --range 30323 --k 37 --reps 23"
     os.popen(cmd).read()
 
     records = get_records(out_dir)

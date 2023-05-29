@@ -89,7 +89,7 @@ There are two types of experiments that are implemented and you can run directly
 ### Number of Discovered Species vs. Sample Size
 Experiment execution file is experiments/Diverse_Sampling_Exp.py. By executing the script, you will obtain a plot of the mean number of discovered species against the sample size.
 
-** Note: ** To successfully execute the scripts, you have to create a Python virtual environment, or equivalent form, with required packages defined in 'requirements.txt'.
+**Note:** To successfully execute the scripts, you have to create a Python virtual environment, or equivalent form of environment, with required packages defined in 'requirements.txt'.
 
 ```
 python experiment.py <input_file> <output_file> [max_sample_size] [repetitions]
